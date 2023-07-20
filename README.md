@@ -21,8 +21,8 @@ When using services we work with:
 
 ### Service Definitions
 
-Service definitions describe the communication between the client and the server. They are pretty straightforward, you define
-and interface that extends the `Service` interface and define the functions the service provides.
+Service definitions describe the communication between the client and the server. They are pretty straightforward, you
+create and interface that extends `Service` and define the functions the service provides.
 
 All functions must have the `= service()` default implementation assigned.
 
@@ -37,7 +37,7 @@ interface HelloService : Service {
 ### Service Consumers
 
 When the client wants to use the service it defines a service consumer. This is also pretty easy.
-The compiler plugin generates all the code for the client side, you can simply call the service.
+The compiler plugin generates all the code for the client side, you can simply call the functions.
 This simple definition uses the default service transport (more about that later).
 
 ```kotlin
@@ -70,7 +70,7 @@ class HelloServiceProvider : HelloService, ServiceProvider {
 Most cases you need authorization on the server side. Services provide you a so-called `serviceContext`.
 This context may contain the identity of the user, along with other information.
 
-You can use `serviceContext` only inside the service functions. All other use will throw an exception.
+You can use `serviceContext` only inside the service functions. All other uses throw an exception.
 
 ```kotlin
 class HelloServiceProvider : HelloService, ServiceProvider {
@@ -96,8 +96,8 @@ class HelloServiceProvider : HelloService, ServiceProvider {
 
 ### Service Transports
 
-Transports move the service request and response between the client and the server. The library uses Protocol Buffers
-as transport format.
+Transports move the call arguments and the return values between the client and the server.
+The library uses Protocol Buffers as transport format.
 
 #### Client Side
 
@@ -194,9 +194,9 @@ val commonMain by getting {
 
 ## A Kind of Magic
 
-So, how does this work? Actually, it is pretty simple, read on.
+So, how does this work? Actually, it is pretty simple.
 
-You can't see this code as it is added during compilation, but there are a few manually written
+You can't see code like the ones below as it is added during compilation. There are a few manually written
 examples between the [tests](z2-service-runtime/src/jvmTest/kotlin/hu/simplexion/z2/service/runtime).
 
 ### Client Side Transform
@@ -234,11 +234,12 @@ The server side transform is a bit trickier, mostly because we need information 
 When a class implements the `ServiceProvider` interface, the plugin:
 
 * for each original service function (the ones you write)
-  * renames it to `<fun-name>WithContext`
+  * removes the `override` modifier
   * adds a `serviceContext` argument
   * replaces all `ServiceProvider.serviceContext` property accesses to access the parameter added above 
-  * creates a new `<fun-name>` function that calls `<fun-name>WithContext` with a null context
-* adds a `dispatch` function that calls the `<fun-name>WithContext` functions
+  * creates a new function with the same name and arguments but without the `serviceContext` parameter
+  * adds the `override` modifier to this new function
+* adds a `dispatch` function that handles dispatch of the incoming calls
 
 ```kotlin
 package hu.simplexion.z2.service.runtime
@@ -272,10 +273,9 @@ class TestServiceProvider : TestService, ServiceProvider {
 }
 ```
 
-Unfortunately, the `WithContext` machinations are necessary. We need the context to perform authorization or
-other functions that depend on the identity of the client.
+### Considerations
 
-There are other possible solutions for passing this info:
+There are other possible solutions for passing the context.
 
 ThreadLocal would be able to pass the information. However, I felt that it would be really dangerous. The
 main purpose of the context is authorization. I don't know how to make it sure that TreadLocal is properly
@@ -345,4 +345,18 @@ message ComplexResponsePayload {
 }
 ```
 
+## License
 
+> Copyright (c) 2020-2023 Simplexion Kft, Hungary and contributors
+>
+> Licensed under the Apache License, Version 2.0 (the "License");
+> you may not use this work except in compliance with the License.
+> You may obtain a copy of the License at
+>
+>    http://www.apache.org/licenses/LICENSE-2.0
+>
+> Unless required by applicable law or agreed to in writing, software
+> distributed under the License is distributed on an "AS IS" BASIS,
+> WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+> See the License for the specific language governing permissions and
+> limitations under the License.
