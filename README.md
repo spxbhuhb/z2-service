@@ -4,9 +4,9 @@
 [![GitHub License](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
 ![Kotlin](https://img.shields.io/github/languages/top/spxbhuhb/z2-service)
 
-Client-server communication with the absolute minimum amount of boilerplate. Part of [Z2](https://github.com/spxbhuhb/z2)
+Client-server communication with the absolute minimum of boilerplate. Part of [Z2](https://github.com/spxbhuhb/z2).
 
-Status: **planning, no coding has been done yet**
+Status: **initial development**
 
 The library has a runtime part and a Kotlin compiler plugin that transforms the code.
 
@@ -24,7 +24,7 @@ When using services we work with:
 Service definitions describe the communication between the client and the server. They are pretty straightforward, you define
 and interface that extends the `Service` interface and define the functions the service provides.
 
-All functions must have the `= service()` default implementation set.
+All functions must have the `= service()` default implementation assigned.
 
 ```kotlin
 interface HelloService : Service {
@@ -37,7 +37,7 @@ interface HelloService : Service {
 ### Service Consumers
 
 When the client wants to use the service it defines a service consumer. This is also pretty easy.
-The compiler plugin generates all the code for client side, you can simply call the service.
+The compiler plugin generates all the code for the client side, you can simply call the service.
 This simple definition uses the default service transport (more about that later).
 
 ```kotlin
@@ -53,7 +53,7 @@ fun main() {
 ### Service Providers
 
 On the server side you need a service provider that does whatever this service should do. You also have to register
-this provider, so the clients will be able to reach it (details in the transports section).
+this provider, so the server knows that it's there (details in the transports section).
 
 ```kotlin
 class HelloServiceProvider : HelloService, ServiceProvider {
@@ -67,7 +67,7 @@ class HelloServiceProvider : HelloService, ServiceProvider {
 
 ### Service Transports
 
-Transports move the service request and response between the server and the client. The library uses Protocol Buffers
+Transports move the service request and response between the client and the server. The library uses Protocol Buffers
 as transport format.
 
 #### Client Side
@@ -99,13 +99,39 @@ fun Application.module() {
         masking = false
     }
 
-    serviceProviderRegistry += HelloServiceProvider()
+    defaultServiceProviderRegistry += HelloServiceProvider()
 
     routing {
         defaultWebSocketServiceDispatcher("/z2/services")
     }
 }
 ```
+
+## Supported Data Types
+
+Services support these data types as function parameters and return values:
+
+### Simple Types
+
+* `Boolean`
+* `Int`
+* `Long`
+* `String`
+* `ByteArray`
+* `UUID` (from Z2 Commons)
+
+### Composite Types
+
+[Z2 Schematic](https://github.com/spxbhuhb/z2-schematic) classes can be used with services out-of-the-box.
+
+Any other classes that support Protocol Buffer decoding/encoding:
+
+* the companion object of the class implements the `ProtoEncoder<T>` and `ProtoDecoder<T>` interface
+
+### Collections
+
+* `List` of any simple or composite type
+* `MutableList` of any simple or composite type
 
 ## Gradle Setup
 
@@ -142,40 +168,117 @@ val commonMain by getting {
 So, how does this work? Actually, it is pretty simple. The compiler plugin does two things:
 
 * on the client side it creates an override for the service functions
-* on the server side it adds a `dispatch` function and creates an override for the service functions
+* on the server side it adds a `dispatch` function
+
+That's it. You can't see this code as it is added during compilation, but there are a few
+manually written examples between the [tests](z2-service-runtime/src/jvmTest/kotlin/hu/simplexion/z2/service/runtime).
 
 ### Client Side Transform
 
-When you extend a service interface (one that extends `Service`) the plugin creates 
-something like this:
+When a class implements the `ServiceConsumer` interface, the plugin creates overrides for the service functions
+like this:
 
 ```kotlin
-object Hello : HelloService, ServiceConsumer {
+package hu.simplexion.z2.service.runtime
 
-    override suspend fun hello(myName: String): String =
-        defaultServiceTransport
-            .serviceCall(this::class.qualifiedName, "hello")
-            .string(3, myName)
-            .execute()
-            .string(3)
+import hu.simplexion.z2.commons.protobuf.ProtoMessageBuilder
+import hu.simplexion.z2.commons.protobuf.ProtoOneString
+
+object TestServiceConsumer : TestService, ServiceConsumer {
+
+    override suspend fun testFun(arg1: Int, arg2: String): String =
+        defaultServiceCallTransport
+            .call(
+                serviceName,
+                "testFun",
+                ProtoMessageBuilder() // this is the payload to send to the service
+                    .int(1, arg1)
+                    .string(2, arg2)
+                    .pack(),
+                ProtoOneString // this is a decoder that will decode the response
+            )
 
 }
 ```
 
 ### Server Side Transform
 
-```kotlin
-class HelloServiceProvider : HelloService, ServiceProvider {
+When a class implements the `ServiceProvider` interface, the plugin creates a `dispatch` function like this:
 
-    override suspend fun dispatch(records : List<ProtoRecord>) : LenProtoRecord {
-        when (records[1].string()) {
-            "hello" -> hello(records[2].string()).toLenRecord()
+```kotlin
+package hu.simplexion.z2.service.runtime
+
+import hu.simplexion.z2.commons.protobuf.ProtoMessage
+import hu.simplexion.z2.commons.protobuf.ProtoMessageBuilder
+
+class TestServiceProvider : TestService, ServiceProvider {
+
+    override suspend fun dispatch(funName: String, payload: ProtoMessage, builder : ProtoMessageBuilder) {
+        when (funName) {
+            "testFun" -> builder.string(1, testFun(payload.int(1), payload.string(2)))
+            else -> throw IllegalStateException("unknown function: $funName")
         }
     }
-    
-    override suspend fun hello(myName: String): String {
-        throw NotImplementedError()
+
+    override suspend fun testFun(arg1: Int, arg2: String): String {
+        return "i:$arg1 s:$arg2"
     }
 
 }
 ```
+
+### Wire Formats
+
+Both request and response use an envelope to encapsulate the metadata needed for routing.
+
+#### Request
+
+```protobuf
+message ServiceCallRequestEnvelope {
+    string id = 1;
+    string serviceName = 2;
+    string funName = 3;
+    bytes payload = 4;
+}
+```
+
+The payload contains the arguments of the call. For example:
+
+```protobuf
+message HelloRequestPayload {
+    string myName = 1;
+    string from = 2;
+}
+```
+
+#### Response 
+
+```protobuf
+message ResponseEnvelope {
+    string id = 1;
+    int32 responseCode = 2;
+    bytes payload = 3;
+}
+```
+
+When there is no return value, the response payload is omitted.
+
+When the return value is a primitive type, the field number is always `1`:
+
+```protobuf
+message HelloResponsePayload {
+    string value = 1;
+}
+```
+
+When the return value is a complex type, the field numbers are assigned by the encoder of the type:
+
+```protobuf
+message ComplexResponsePayload {
+    string field1 = 1;
+    int field2 = 2;
+    OtherComplexType field3 = 3;
+}
+```
+
+

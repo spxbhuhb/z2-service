@@ -5,6 +5,7 @@ package hu.simplexion.z2.service.kotlin.ir
 
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
+import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -14,6 +15,8 @@ class ServicePluginContext(
 ) {
 
     val serviceClass = SERVICE_CLASS.runtimeClass()
+    val serviceProviderType = SERVICE_PROVIDER_CLASS.runtimeClass().defaultType
+    val serviceConsumerType = SERVICE_CONSUMER_CLASS.runtimeClass().defaultType
 
     val typeSystem = IrTypeSystemContextImpl(irContext.irBuiltIns)
 

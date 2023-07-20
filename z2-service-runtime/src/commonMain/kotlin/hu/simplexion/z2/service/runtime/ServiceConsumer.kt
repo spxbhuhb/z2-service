@@ -1,3 +1,8 @@
 package hu.simplexion.z2.service.runtime
 
-interface ServiceConsumer
+interface ServiceConsumer {
+
+    val serviceName : String
+        get() = checkNotNull(this::class.qualifiedName).substringBeforeLast("Consumer")
+
+}

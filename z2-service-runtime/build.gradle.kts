@@ -44,6 +44,11 @@ kotlin {
                 api("hu.simplexion.z2:z2-commons:${z2_version}")
             }
         }
+        commonTest {
+            dependencies {
+                api(kotlin("test"))
+            }
+        }
     }
 }
 

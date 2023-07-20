@@ -1,10 +1,15 @@
 package hu.simplexion.z2.service.runtime
 
-import hu.simplexion.z2.commons.protobuf.ProtoRecord
+import hu.simplexion.z2.commons.protobuf.ProtoMessage
+import hu.simplexion.z2.commons.protobuf.ProtoMessageBuilder
 
 interface ServiceProvider {
 
-    suspend fun dispatch(funName : String, parameters : List<ProtoRecord>) : ProtoRecord =
+    val serviceName : String
+        get() = checkNotNull(this::class.qualifiedName).substringBeforeLast("Provider")
+
+    suspend fun dispatch(funName: String, payload: ProtoMessage, builder : ProtoMessageBuilder) {
         throw IllegalStateException("ServiceProvider.dispatch should be overridden, is the compiler plugin missing?")
+    }
 
 }

@@ -3,6 +3,7 @@
  */
 package hu.simplexion.z2.service.kotlin.ir
 
+import hu.simplexion.z2.service.kotlin.ir.klass.ServiceModuleTransform
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
@@ -13,7 +14,7 @@ internal class ServiceGenerationExtension: IrGenerationExtension {
 
         ServicePluginContext(pluginContext).apply {
 
-//            moduleFragment.accept(ServiceModuleTransform(this), null)
+            moduleFragment.accept(ServiceModuleTransform(this), null)
 
         }
     }
