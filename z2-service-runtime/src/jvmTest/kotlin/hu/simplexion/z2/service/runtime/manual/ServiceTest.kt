@@ -1,5 +1,6 @@
-package hu.simplexion.z2.service.runtime
+package hu.simplexion.z2.service.runtime.manual
 
+import hu.simplexion.z2.service.runtime.defaultServiceProviderRegistry
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals

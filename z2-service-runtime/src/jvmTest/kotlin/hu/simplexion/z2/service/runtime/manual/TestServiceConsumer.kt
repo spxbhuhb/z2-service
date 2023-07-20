@@ -1,7 +1,9 @@
-package hu.simplexion.z2.service.runtime
+package hu.simplexion.z2.service.runtime.manual
 
 import hu.simplexion.z2.commons.protobuf.ProtoMessageBuilder
 import hu.simplexion.z2.commons.protobuf.ProtoOneString
+import hu.simplexion.z2.service.runtime.ServiceConsumer
+import hu.simplexion.z2.service.runtime.defaultServiceCallTransport
 
 object TestServiceConsumer : TestService, ServiceConsumer {
 

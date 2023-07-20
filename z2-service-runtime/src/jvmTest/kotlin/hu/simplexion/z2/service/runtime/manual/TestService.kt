@@ -1,4 +1,6 @@
-package hu.simplexion.z2.service.runtime
+package hu.simplexion.z2.service.runtime.manual
+
+import hu.simplexion.z2.service.runtime.Service
 
 interface TestService : Service {
 

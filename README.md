@@ -59,7 +59,36 @@ this provider, so the server knows that it's there (details in the transports se
 class HelloServiceProvider : HelloService, ServiceProvider {
 
     override suspend fun hello(myName: String): String {
-        return "Hello $myName"
+        return "Hello $myName!"
+    }
+
+}
+```
+
+#### Service Context
+
+Most cases you need authorization on the server side. Services provide you a so-called `serviceContext`.
+This context may contain the identity of the user, along with other information.
+
+You can use `serviceContext` only inside the service functions. All other use will throw an exception.
+
+```kotlin
+class HelloServiceProvider : HelloService, ServiceProvider {
+
+    override suspend fun hello(myName: String): String {
+        if (serviceContext.isAnonymous) {
+            return "Sorry, I can talk only with clients I know."
+        } else {
+            return "Hello $myName! Your user id is: ${serviceContext.owner}."
+        }            
+    }
+    
+    override suspend fun login(email : String, password : String) : String {
+        if (authenticate(email, password)) serviceContext.owner = myId
+    }
+
+    override suspend fun logout() : String {
+        serviceContext.owner = null
     }
 
 }
@@ -165,13 +194,10 @@ val commonMain by getting {
 
 ## A Kind of Magic
 
-So, how does this work? Actually, it is pretty simple. The compiler plugin does two things:
+So, how does this work? Actually, it is pretty simple, read on.
 
-* on the client side it creates an override for the service functions
-* on the server side it adds a `dispatch` function
-
-That's it. You can't see this code as it is added during compilation, but there are a few
-manually written examples between the [tests](z2-service-runtime/src/jvmTest/kotlin/hu/simplexion/z2/service/runtime).
+You can't see this code as it is added during compilation, but there are a few manually written
+examples between the [tests](z2-service-runtime/src/jvmTest/kotlin/hu/simplexion/z2/service/runtime).
 
 ### Client Side Transform
 
@@ -203,29 +229,67 @@ object TestServiceConsumer : TestService, ServiceConsumer {
 
 ### Server Side Transform
 
-When a class implements the `ServiceProvider` interface, the plugin creates a `dispatch` function like this:
+The server side transform is a bit trickier, mostly because we need information for authorization.
+
+When a class implements the `ServiceProvider` interface, the plugin:
+
+* for each original service function (the ones you write)
+  * renames it to `<fun-name>WithContext`
+  * adds a `serviceContext` argument
+  * replaces all `ServiceProvider.serviceContext` property accesses to access the parameter added above 
+  * creates a new `<fun-name>` function that calls `<fun-name>WithContext` with a null context
+* adds a `dispatch` function that calls the `<fun-name>WithContext` functions
 
 ```kotlin
 package hu.simplexion.z2.service.runtime
 
 import hu.simplexion.z2.commons.protobuf.ProtoMessage
 import hu.simplexion.z2.commons.protobuf.ProtoMessageBuilder
+import hu.simplexion.z2.service.runtime.ServiceContext
+import hu.simplexion.z2.service.runtime.ServiceProvider
 
 class TestServiceProvider : TestService, ServiceProvider {
 
-    override suspend fun dispatch(funName: String, payload: ProtoMessage, builder : ProtoMessageBuilder) {
+    override suspend fun dispatch(
+        funName: String,
+        payload: ProtoMessage,
+        context: ServiceContext,
+        response : ProtoMessageBuilder
+    ) {
         when (funName) {
-            "testFun" -> builder.string(1, testFun(payload.int(1), payload.string(2)))
+            "testFun" -> response.string(1, testFun(payload.int(1), payload.string(2), context))
             else -> throw IllegalStateException("unknown function: $funName")
         }
     }
 
-    override suspend fun testFun(arg1: Int, arg2: String): String {
-        return "i:$arg1 s:$arg2"
+    suspend fun testFun(arg1: Int, arg2: String, serviceContext : ServiceContext?): String {
+        return "i:$arg1 s:$arg2 $serviceContext"
     }
+
+    override suspend fun testFun(arg1: Int, arg2: String) =
+        testFun(arg1, arg2, null)
 
 }
 ```
+
+Unfortunately, the `WithContext` machinations are necessary. We need the context to perform authorization or
+other functions that depend on the identity of the client.
+
+There are other possible solutions for passing this info:
+
+ThreadLocal would be able to pass the information. However, I felt that it would be really dangerous. The
+main purpose of the context is authorization. I don't know how to make it sure that TreadLocal is properly
+cleared all the time. Also, it would make elevation much-much harder (if we decide to implement it).
+
+Adding a parameter to the function would also work. That parameter would be meaningless on the
+client side and introduce visual clutter/boilerplate. That's exactly what I wanted to avoid.
+
+Other possibility would be to use different definitions for the consumer and the provider. While that
+would work, there would be no easy way to make sure that the definitions are aligned. Also, code 
+analysis tools wouldn't realize that the two sides belong to each other.
+
+When looking from application programming point of view, the current solution is the most comfortable
+one, therefore that's the one implemented.
 
 ### Wire Formats
 

@@ -13,17 +13,19 @@ class PluginAnnotationsProvider(testServices: TestServices) : EnvironmentConfigu
 
     companion object {
         private const val ANNOTATIONS_JAR_DIR = "../z2-service-runtime/build/libs/"
+
         private val ANNOTATIONS_JAR_FILTER = FilenameFilter { _, name ->
-            name.startsWith("z2-service-runtime-jvm") && name.endsWith(".jar") && "sources" !in name
+            name.startsWith("z2-service-runtime-") && name.endsWith("-all.jar") && "sources" !in name
         }
     }
 
     override fun configureCompilerConfiguration(configuration: CompilerConfiguration, module: TestModule) {
         val libDir = File(ANNOTATIONS_JAR_DIR)
         testServices.assertions.assertTrue(libDir.exists() && libDir.isDirectory, failMessage)
+
         val jar = libDir.listFiles(ANNOTATIONS_JAR_FILTER)?.firstOrNull() ?: testServices.assertions.fail(failMessage)
         configuration.addJvmClasspathRoot(jar)
     }
 
-    private val failMessage = { "Runtime JAR does not exist. Please run :z2-service-runtime:jar" }
+    private val failMessage = { "Runtime JAR does not exist. Please run :z2-service-runtime:shadowJar" }
 }

@@ -10,7 +10,7 @@ import kotlin.streams.toList
 fun runtimeClassPath() : List<File> =
     listOf(
         Files.list(Paths.get("../z2-service-runtime/build/libs/"))
-            .filter { it.name.startsWith("z2-service-runtime-jvm-") }
+            .filter { it.name.startsWith("z2-service-runtime-") && it.name.endsWith("-all.jar") }
             .toList()
             .maxBy { it.getLastModifiedTime() }
             .toFile()

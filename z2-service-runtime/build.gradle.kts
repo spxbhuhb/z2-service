@@ -5,6 +5,8 @@ import java.net.URI
  */
 plugins {
     kotlin("multiplatform") version "1.9.0"
+    id("com.github.johnrengelman.shadow") version "7.1.2"
+    java
     signing
     `maven-publish`
 }
@@ -30,6 +32,7 @@ kotlin {
 
     jvm {
         jvmToolchain(11)
+        withJava()
     }
 
     js(IR) {
@@ -50,6 +53,9 @@ kotlin {
             }
         }
     }
+}
+
+tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
 }
 
 // ----  Publishing ----
