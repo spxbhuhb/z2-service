@@ -8,7 +8,7 @@ Client-server communication with the absolute minimum of boilerplate. Part of [Z
 
 Status: **initial development**
 
-Example project: [Z2 Service Example](https://github.com/spxbhuhb/z2-services-example)
+Example project: [Z2 Service Example](https://github.com/spxbhuhb/z2-service-example)
 
 The library has a runtime part and a Kotlin compiler plugin that transforms the code.
 
