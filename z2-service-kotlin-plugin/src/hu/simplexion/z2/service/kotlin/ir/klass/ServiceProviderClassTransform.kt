@@ -64,12 +64,7 @@ class ServiceProviderClassTransform(
 
         val contextLess = contextLessDeclaration(function)
 
-        function.addDispatchReceiver {// replace the interface in the dispatcher with the class
-            type = transformedClass.defaultType
-        }
-
         function.overriddenSymbols = emptyList()
-
         function.addValueParameter(Name.identifier(SERVICE_CONTEXT_ARG_NAME), pluginContext.serviceContextType)
 
         addContextLessBody(contextLess, function)
@@ -79,6 +74,11 @@ class ServiceProviderClassTransform(
         contextFunctions += function
 
         return function
+    }
+
+    fun IrSimpleFunction.setDispatchReceiver() {
+        val thisReceiver = transformedClass.thisReceiver!!
+        dispatchReceiverParameter = thisReceiver.copyTo(this, type = thisReceiver.type)
     }
 
     fun replaceFakeOverrideWithThrow(function: IrSimpleFunction) {
@@ -111,10 +111,7 @@ class ServiceProviderClassTransform(
         }.apply {
 
             parent = transformedClass
-            addDispatchReceiver {
-                type = transformedClass.defaultType
-            }
-
+            setDispatchReceiver()
             overriddenSymbols = original.overriddenSymbols
 
             for (typeParameter in original.typeParameters) {

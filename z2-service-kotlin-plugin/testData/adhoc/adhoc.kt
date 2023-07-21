@@ -17,7 +17,7 @@ interface ClickService : Service {
 
 }
 
-object Clicks : ClickService, ServiceConsumer
+object ClickServiceConsumer : ClickService, ServiceConsumer
 
 class ClickServiceProvider : ClickService, ServiceProvider {
 
@@ -35,7 +35,7 @@ fun box(): String {
         val provider = ClickServiceProvider()
         defaultServiceProviderRegistry[provider.serviceName] = provider
 
-        response = Clicks.click()
+        response = ClickServiceConsumer.click()
     }
-    return if (response == 24) "OK" else "Fail (response=$response)"
+    return if (response == 23) "OK" else "Fail (response=$response)"
 }
