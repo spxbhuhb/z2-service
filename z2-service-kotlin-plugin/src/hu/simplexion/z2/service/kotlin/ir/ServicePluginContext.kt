@@ -31,7 +31,7 @@ class ServicePluginContext(
             .first().owner.getter?.symbol
     ) { "Missing $GLOBALS_CLASS, is the plugin added to gradle?" }
 
-    val protoMessageBuilderClass = PROTO_MESSAGE_BUILDER.runtimeClass(PROTO_PACKAGE)
+    val protoMessageBuilderClass = PROTO_MESSAGE_BUILDER_CLASS.runtimeClass(PROTO_PACKAGE)
     val protoMessageBuilderConstructor = protoMessageBuilderClass.constructors.first()
     val protoBuilderPack = protoMessageBuilderClass.functionByName(PROTO_BUILDER_PACK)
     val protoBuilderBoolean = protoMessageBuilderClass.functionByName(PROTO_BUILDER_BOOLEAN)
@@ -40,6 +40,14 @@ class ServicePluginContext(
     val protoBuilderString = protoMessageBuilderClass.functionByName(PROTO_BUILDER_STRING)
     val protoBuilderByteArray = protoMessageBuilderClass.functionByName(PROTO_BUILDER_BYTEARRAY)
     val protoBuilderUuid = protoMessageBuilderClass.functionByName(PROTO_BUILDER_UUID)
+
+    val protoMessageClass = PROTO_MESSAGE_CLASS.runtimeClass(PROTO_PACKAGE)
+    val protoMessageBoolean = protoMessageClass.functionByName(PROTO_MESSAGE_BOOLEAN)
+    val protoMessageInt = protoMessageClass.functionByName(PROTO_MESSAGE_INT)
+    val protoMessageLong = protoMessageClass.functionByName(PROTO_MESSAGE_LONG)
+    val protoMessageString = protoMessageClass.functionByName(PROTO_MESSAGE_STRING)
+    val protoMessageByteArray = protoMessageClass.functionByName(PROTO_MESSAGE_BYTEARRAY)
+    val protoMessageUuid = protoMessageClass.functionByName(PROTO_MESSAGE_UUID)
 
     val uuidType = UUID.runtimeClass(UTIL_PACKAGE).defaultType
 

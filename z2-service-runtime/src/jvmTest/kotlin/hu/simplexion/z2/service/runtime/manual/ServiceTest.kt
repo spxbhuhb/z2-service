@@ -7,15 +7,20 @@ import kotlin.test.assertEquals
 
 class ServiceTest {
 
-    @Test
-    fun serviceTest() {
+    fun box(): String {
+        var response : String
         runBlocking {
             val provider = TestServiceProvider()
             defaultServiceProviderRegistry[provider.serviceName] = provider
 
-            val response = TestServiceConsumer.testFun(1, "hello")
-            assertEquals("i:1 s:hello", response)
+            response = TestServiceConsumer.testFun(1, "hello")
         }
+        return if (response.startsWith("i:1 s:hello BasicServiceContext(")) "OK" else "Fail (response=$response)"
+    }
+
+    @Test
+    fun serviceTest() {
+        assertEquals("OK", box())
     }
 
 }

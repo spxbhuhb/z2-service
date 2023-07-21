@@ -1,5 +1,7 @@
 package hu.simplexion.z2.service.runtime
 
-class BasicServiceContext : ServiceContext {
+import hu.simplexion.z2.commons.util.UUID
 
-}
+data class BasicServiceContext(
+    val uuid: UUID<BasicServiceContext> = UUID()
+) : ServiceContext

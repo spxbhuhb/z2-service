@@ -345,6 +345,14 @@ message ComplexResponsePayload {
 }
 ```
 
+## Plugin Development
+
+`z2-service-kotlin-plugin` contains the source code of the compiler plugin.
+
+It uses the standard [Kotlin compiler test infrastructure](https://github.com/JetBrains/kotlin/blob/bebb9b13924660160226a85cde59b6f30c72feec/compiler/test-infrastructure/ReadMe.md).
+
+To run box tests you have to run the `z2-service-runtime:shadowJar` Gradle task.
+
 ## License
 
 > Copyright (c) 2020-2023 Simplexion Kft, Hungary and contributors

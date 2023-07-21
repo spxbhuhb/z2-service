@@ -20,6 +20,12 @@ const val SERVICE_CONTEXT_PROPERTY = "serviceContext"
 const val SERVICE_CONTEXT_ARG_NAME = "serviceContext"
 const val SERVICE_CONTEXT_CLASS = "ServiceContext"
 
+const val DISPATCH_NAME = "dispatch"
+const val DISPATCH_FUN_NAME_INDEX = 0
+const val DISPATCH_PAYLOAD_INDEX = 1
+const val DISPATCH_CONTEXT_INDEX = 2
+const val DISPATCH_RESPONSE_INDEX = 3
+
 const val SERVICE_CALL_TRANSPORT_CLASS = "ServiceCallTransport"
 const val CALL_FUNCTION = "call"
 const val CALL_TYPE_INDEX = 0 // type argument index for CALL_FUNCTION, this is the return type of the service call
@@ -36,7 +42,7 @@ const val PROTO_ONE_STRING = "ProtoOneString"
 const val PROTO_ONE_BYTEARRAY = "ProtoOneByteArray"
 const val PROTO_ONE_UUID = "ProtoOneUuid"
 
-const val PROTO_MESSAGE_BUILDER = "ProtoMessageBuilder"
+const val PROTO_MESSAGE_BUILDER_CLASS = "ProtoMessageBuilder"
 const val PROTO_BUILDER_PACK = "pack"
 const val PROTO_BUILDER_BOOLEAN = "boolean"
 const val PROTO_BUILDER_INT = "int"
@@ -44,6 +50,14 @@ const val PROTO_BUILDER_LONG = "long"
 const val PROTO_BUILDER_STRING = "string"
 const val PROTO_BUILDER_BYTEARRAY = "byteArray"
 const val PROTO_BUILDER_UUID = "uuid"
+
+const val PROTO_MESSAGE_CLASS = "ProtoMessage"
+const val PROTO_MESSAGE_BOOLEAN = "boolean"
+const val PROTO_MESSAGE_INT = "int"
+const val PROTO_MESSAGE_LONG = "long"
+const val PROTO_MESSAGE_STRING = "string"
+const val PROTO_MESSAGE_BYTEARRAY = "byteArray"
+const val PROTO_MESSAGE_UUID = "uuid"
 
 const val BUILDER_CALL_FIELD_NUMBER_INDEX = 0 // index of the fieldNumber in ProtoMessageBuilder().<type>(1, "")
 const val BUILDER_CALL_VALUE_INDEX = 1 // index of the value in ProtoMessageBuilder().<type>(1, "")

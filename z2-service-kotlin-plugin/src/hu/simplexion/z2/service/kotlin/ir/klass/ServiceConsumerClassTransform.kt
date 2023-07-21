@@ -55,7 +55,7 @@ class ServiceConsumerClassTransform(
         function.origin = IrDeclarationOrigin.DEFINED
         function.isFakeOverride =false
 
-        function.addDispatchReceiver {
+        function.addDispatchReceiver { // replace the interface in the dispatcher with the class
             type = transformedClass.defaultType
         }
 
@@ -94,18 +94,9 @@ class ServiceConsumerClassTransform(
         )
 
         for (valueParameter in function.valueParameters) {
-            val builderFun = when (valueParameter.type) {
-                irBuiltIns.booleanType -> pluginContext.protoBuilderBoolean
-                irBuiltIns.intType -> pluginContext.protoBuilderInt
-                irBuiltIns.longType -> pluginContext.protoBuilderLong
-                irBuiltIns.stringType -> pluginContext.protoBuilderString
-                irBuiltIns.byteArray -> pluginContext.protoBuilderByteArray
-                pluginContext.uuidType -> pluginContext.protoBuilderUuid
-                else -> throw IllegalArgumentException("invalid parameter type: ${valueParameter.symbol} function: ${function.symbol}")
-            }
 
             current = irCall(
-                builderFun,
+                requireNotNull(valueParameter.type.protoBuilderFun())  { "unsupported type: ${valueParameter.symbol} function: ${function.symbol}" },
                 dispatchReceiver = current
             ).also {
                 it.putValueArgument(BUILDER_CALL_FIELD_NUMBER_INDEX, irConst(valueParameter.index + 1))

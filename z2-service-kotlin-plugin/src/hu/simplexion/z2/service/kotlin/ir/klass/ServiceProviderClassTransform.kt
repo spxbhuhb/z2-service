@@ -3,33 +3,25 @@
  */
 package hu.simplexion.z2.service.kotlin.ir.klass
 
-import hu.simplexion.z2.service.kotlin.ir.SERVICE_CONTEXT_ARG_NAME
-import hu.simplexion.z2.service.kotlin.ir.SERVICE_CONTEXT_PROPERTY
-import hu.simplexion.z2.service.kotlin.ir.SERVICE_NAME_PROPERTY
-import hu.simplexion.z2.service.kotlin.ir.ServicePluginContext
+import hu.simplexion.z2.service.kotlin.ir.*
 import org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext
 import org.jetbrains.kotlin.backend.common.ir.addDispatchReceiver
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
+import org.jetbrains.kotlin.backend.common.lower.irImplicitCoercionToUnit
 import org.jetbrains.kotlin.backend.common.lower.irThrow
 import org.jetbrains.kotlin.ir.IrStatement
+import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.builders.declarations.addTypeParameter
 import org.jetbrains.kotlin.ir.builders.declarations.addValueParameter
 import org.jetbrains.kotlin.ir.builders.declarations.buildFun
-import org.jetbrains.kotlin.ir.builders.irBlockBody
-import org.jetbrains.kotlin.ir.builders.irGet
-import org.jetbrains.kotlin.ir.builders.irNull
-import org.jetbrains.kotlin.ir.builders.irReturn
-import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
-import org.jetbrains.kotlin.ir.declarations.IrFunction
-import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
+import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.expressions.IrBranch
+import org.jetbrains.kotlin.ir.expressions.IrExpression
+import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.defaultType
-import org.jetbrains.kotlin.ir.util.SYNTHETIC_OFFSET
-import org.jetbrains.kotlin.ir.util.constructors
-import org.jetbrains.kotlin.ir.util.defaultType
-import org.jetbrains.kotlin.ir.util.getPropertyGetter
+import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.name.Name
 
 class ServiceProviderClassTransform(
@@ -38,11 +30,13 @@ class ServiceProviderClassTransform(
 
     override lateinit var transformedClass: IrClass
 
+    lateinit var dispatch: IrSimpleFunction
     override lateinit var serviceNameGetter: IrSimpleFunctionSymbol
     lateinit var serviceContextGetter: IrSimpleFunctionSymbol
 
     override val serviceFunctions = mutableListOf<IrSimpleFunctionSymbol>()
 
+    val contextFunctions = mutableListOf<IrSimpleFunction>()
     val contextLessFunctions = mutableListOf<IrSimpleFunction>()
 
     override fun visitClassNew(declaration: IrClass): IrStatement {
@@ -57,6 +51,7 @@ class ServiceProviderClassTransform(
         super.visitClassNew(declaration)
 
         transformedClass.declarations += contextLessFunctions
+
         generateDispatch()
 
         return declaration
@@ -69,12 +64,19 @@ class ServiceProviderClassTransform(
 
         val contextLess = contextLessDeclaration(function)
 
+        function.addDispatchReceiver {// replace the interface in the dispatcher with the class
+            type = transformedClass.defaultType
+        }
+
         function.overriddenSymbols = emptyList()
+
         function.addValueParameter(Name.identifier(SERVICE_CONTEXT_ARG_NAME), pluginContext.serviceContextType)
 
         addContextLessBody(contextLess, function)
 
         function.accept(ServiceContextTransform(pluginContext, function, serviceContextGetter), null)
+
+        contextFunctions += function
 
         return function
     }
@@ -152,6 +154,68 @@ class ServiceProviderClassTransform(
     }
 
     fun generateDispatch() {
+        val dispatch = checkNotNull(transformedClass.getSimpleFunction(DISPATCH_NAME)).owner
+        if (!dispatch.isFakeOverride) return
 
+        dispatch.isFakeOverride = false
+        dispatch.origin = IrDeclarationOrigin.DEFINED
+
+        dispatch.addDispatchReceiver {// replace the interface in the dispatcher with the class
+            type = transformedClass.defaultType
+        }
+
+        dispatch.body = DeclarationIrBuilder(irContext, dispatch.symbol).irBlockBody {
+            +irBlock(
+                origin = IrStatementOrigin.WHEN
+            ) {
+                val funName = irTemporary(irGet(dispatch.valueParameters[DISPATCH_FUN_NAME_INDEX]))
+                +irWhen(
+                    irBuiltIns.unitType,
+                    contextFunctions.map { dispatchBranch(dispatch, it, funName) }
+                )
+            }
+        }
     }
+
+    fun IrBlockBodyBuilder.dispatchBranch(dispatch: IrSimpleFunction, serviceFunction: IrSimpleFunction, funName: IrVariable): IrBranch =
+        irBranch(
+            irEquals(
+                irGet(funName),
+                irConst(serviceFunction.name.identifier),
+                IrStatementOrigin.EQEQ
+            ),
+            irImplicitCoercionToUnit(
+                irCall(
+                    requireNotNull(serviceFunction.returnType.protoBuilderFun()) { "unsupported type return type: ${serviceFunction.symbol}" },
+                    dispatchReceiver = irGet(dispatch.valueParameters[DISPATCH_RESPONSE_INDEX]),
+                ).also {
+                    it.putValueArgument(BUILDER_CALL_FIELD_NUMBER_INDEX, irConst(1))
+                    it.putValueArgument(BUILDER_CALL_VALUE_INDEX, callServiceFunction(dispatch, serviceFunction))
+                }
+            )
+        )
+
+    fun IrBlockBodyBuilder.callServiceFunction(dispatch: IrSimpleFunction, serviceFunction: IrSimpleFunction): IrExpression =
+        irCall(
+            serviceFunction.symbol,
+            dispatchReceiver = irGet(dispatch.dispatchReceiverParameter!!)
+        ).also {
+            val valueParameters = serviceFunction.valueParameters
+
+            for (index in 0 until valueParameters.size - 1) { // last parameter is the context
+                val valueParameter = valueParameters[index]
+
+                it.putValueArgument(
+                    index,
+                    irCall(
+                        requireNotNull(valueParameter.type.protoMessageFun()) { "unsupported argument type ${valueParameter.symbol} in ${serviceFunction.symbol}" },
+                        dispatchReceiver = irGet(dispatch.valueParameters[DISPATCH_PAYLOAD_INDEX]),
+                        args = arrayOf(irConst(index + 1))
+                    )
+                )
+            }
+
+            it.putValueArgument(serviceFunction.valueParameters.size - 1, irGet(dispatch.valueParameters[DISPATCH_CONTEXT_INDEX]))
+        }
+
 }
