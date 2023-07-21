@@ -15,6 +15,8 @@ const val TRANSPORT_PACKAGE = "$RUNTIME_PACKAGE.transport"
 const val GLOBALS_CLASS = "GlobalsKt"
 const val DEFAULT_SERVICE_CALL_TRANSPORT = "defaultServiceCallTransport"
 
+val FUN_NAMES_TO_SKIP = listOf("service", "equals", "hashCode", "toString")
+
 const val SERVICE_CALL_TRANSPORT_CLASS = "ServiceCallTransport"
 const val CALL_FUNCTION = "call"
 const val CALL_TYPE_INDEX = 0 // type argument index for CALL_FUNCTION, this is the return type of the service call

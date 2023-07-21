@@ -3,12 +3,13 @@
  */
 package hu.simplexion.z2.service.kotlin.ir
 
+import hu.simplexion.z2.service.kotlin.ir.util.ServiceFunctionCache
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.jvm.functionByName
 import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
 import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.util.constructors
-import org.jetbrains.kotlin.ir.util.getPropertyGetter
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -21,11 +22,13 @@ class ServicePluginContext(
     val serviceProviderType = SERVICE_PROVIDER_CLASS.runtimeClass().defaultType
     val serviceConsumerType = SERVICE_CONSUMER_CLASS.runtimeClass().defaultType
 
-    val serviceCallTransportClass = SERVICE_CALL_TRANSPORT_CLASS.runtimeClass()
+    val serviceCallTransportClass = SERVICE_CALL_TRANSPORT_CLASS.runtimeClass(TRANSPORT_PACKAGE)
     val callFunction = serviceCallTransportClass.functionByName(CALL_FUNCTION)
 
     val defaultServiceCallTransport = checkNotNull(
-        GLOBALS_CLASS.runtimeClass(TRANSPORT_PACKAGE).getPropertyGetter(DEFAULT_SERVICE_CALL_TRANSPORT)
+        irContext
+            .referenceProperties(CallableId(FqName(RUNTIME_PACKAGE),Name.identifier(DEFAULT_SERVICE_CALL_TRANSPORT)))
+            .first().owner.getter?.symbol
     ) { "Missing $GLOBALS_CLASS, is the plugin added to gradle?" }
 
     val protoMessageBuilderClass = PROTO_MESSAGE_BUILDER.runtimeClass(PROTO_PACKAGE)
@@ -49,9 +52,11 @@ class ServicePluginContext(
 
     val typeSystem = IrTypeSystemContextImpl(irContext.irBuiltIns)
 
-    fun String.runtimeClass(pkg: String? = null) =
-        checkNotNull(irContext.referenceClass(ClassId(FqName(pkg ?: RUNTIME_PACKAGE), Name.identifier(this)))) {
-            "Missing runtime class. Maybe the gradle dependency on \"hu.simplexion.z2:z2-service-runtime\" is missing."
+    val serviceFunctionCache = ServiceFunctionCache()
+
+    fun String.runtimeClass(pkg: String = RUNTIME_PACKAGE) =
+        checkNotNull(irContext.referenceClass(ClassId(FqName(pkg), Name.identifier(this)))) {
+            "Missing ${pkg}.$this class. Maybe the gradle dependency on \"hu.simplexion.z2:z2-service-runtime\" is missing."
         }
 
 }
