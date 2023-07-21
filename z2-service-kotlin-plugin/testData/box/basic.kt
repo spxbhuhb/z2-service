@@ -11,31 +11,28 @@ import hu.simplexion.z2.service.runtime.ServiceProvider
 import kotlinx.coroutines.runBlocking
 import hu.simplexion.z2.service.runtime.defaultServiceProviderRegistry
 
-interface ClickService : Service {
+interface TestService : Service {
 
-    suspend fun click() : Int = service()
+    suspend fun testFun(arg1: Int, arg2: String): String = service()
 
 }
 
-object Clicks : ClickService, ServiceConsumer
+object TestServiceConsumer : TestService, ServiceConsumer
 
-class ClickServiceProvider : ClickService, ServiceProvider {
+class TestServiceProvider : TestService, ServiceProvider {
 
-    var clicked = 23
-
-    override suspend fun click(): Int {
-        return clicked++
-    }
+    override suspend fun testFun(arg1: Int, arg2: String) =
+        "i:$arg1 s:$arg2 $serviceContext"
 
 }
 
 fun box(): String {
-    var response : Int = 0
+    var response : String = ""
     runBlocking {
-        val provider = ClickServiceProvider()
+        val provider = TestServiceProvider()
         defaultServiceProviderRegistry[provider.serviceName] = provider
 
-        response = Clicks.click()
+        response = TestServiceConsumer.testFun(1, "hello")
     }
-    return if (response == 24) "OK" else "Fail (response=$response)"
+    return if (response.startsWith("i:1 s:hello BasicServiceContext(")) "OK" else "Fail (response=$response)"
 }

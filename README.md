@@ -8,7 +8,20 @@ Client-server communication with the absolute minimum of boilerplate. Part of [Z
 
 Status: **initial development**
 
+Example project: [Z2 Service Example](https://github.com/spxbhuhb/z2-services-example)
+
 The library has a runtime part and a Kotlin compiler plugin that transforms the code.
+
+Multiplatform Status:
+
+| Platform | Status                                                                       |
+|----------|------------------------------------------------------------------------------|
+| JVM      | Ok                                                                           |
+| JS       | Ok                                                                           |
+| Android  | It would probably work, haven't tried.                                       |
+| iOS      | UUID should be implemented in commons, no idea if IR works on iOS or not.    |
+| Native   | UUID should be implemented in commons, no idea if IR works on Native or not. |
+
 
 ## Overview
 
@@ -52,8 +65,7 @@ fun main() {
 
 ### Service Providers
 
-On the server side you need a service provider that does whatever this service should do. You also have to register
-this provider, so the server knows that it's there (details in the transports section).
+On the server side you need a service provider that does whatever this service should do.
 
 ```kotlin
 class HelloServiceProvider : HelloService, ServiceProvider {
@@ -63,6 +75,17 @@ class HelloServiceProvider : HelloService, ServiceProvider {
     }
 
 }
+```
+
+#### Service Registy
+
+Typically, you register your service providers during application startup some way, so the server knows that they are available.
+
+You can use `defaultServiceProviderRegistry` for this or implement your own way to store the services. These
+registries are used by the transports to find the service.
+
+```kotlin
+HelloServiceProvider().also { defaultServiceProviderRegistry[it.serviceName] = it }
 ```
 
 #### Service Context
@@ -96,21 +119,40 @@ class HelloServiceProvider : HelloService, ServiceProvider {
 
 ### Service Transports
 
-Transports move the call arguments and the return values between the client and the server.
-The library uses Protocol Buffers as transport format.
+Transports move the call arguments and the return values between the client and the server. The library uses Protocol Buffers as 
+transport format, but it does not really care about how the packets reach the other side.
+
+There are a few basic transport implementations for Ktor in the `z2-service-ktor` module. This module has to be added to the project
+as a dependency to use them:
+
+```kotlin
+implementation("hu.simplexion.z2:z2-service-ktor:${z2_service_version}")
+```
 
 #### Client Side
 
-The `defaultServiceTransport` global variable contains the transport.
+The [defaultServiceCallTransport](z2-service-runtime/src/commonMain/kotlin/hu/simplexion/z2/service/runtime/globals.kt)
+global variable contains the transport. You can set this during application startup as the example shows below.
 
-In browsers this is automatically set to `DefaultWebSocketServiceTransport` which connects to the server from where
-the web page is opened with the path `/z2/services`.
+[BasicWebSocketServiceTransport](z2-service-ktor/src/commonMain/kotlin/hu/simplexion/z2/service/ktor/client/BasicWebSocketServiceTransport.kt)
+from the `z2-service-ktor` module provides a basic web socket transport implementation for clients.
+
+```kotlin
+defaultServiceCallTransport = BasicWebSocketServiceTransport(
+    window.location.host,
+    window.location.port.toInt(),
+    "/z2/services"
+).also {
+    it.start()
+}
+```
 
 #### Server Side
 
-With Ktor you can use the `Routing.defaultWebSocketServiceDispatcher` to install a service provider on `/z2/services`.
+With Ktor you can use [Routing.basicWebSocketServiceDispatcher](z2-service-ktor/src/jvmMain/kotlin/hu/simplexion/z2/service/ktor/server/basic.kt)
+from the `z2-service-ktor` to install a service provider`.
 
-With other servers you can write your own service provider based on `defaultWebSocketServiceDispatcher`, it's pretty easy.
+With other servers you can write your own service provider based on `basicWebSocketServiceDispatcher`, it's pretty easy.
 
 You also have to add your providers to the list of know service providers. Here is a full example:
 
@@ -128,10 +170,10 @@ fun Application.module() {
         masking = false
     }
 
-    defaultServiceProviderRegistry += HelloServiceProvider()
+    HelloServiceProvider().also { defaultServiceProviderRegistry[it.serviceName] = it }
 
     routing {
-        defaultWebSocketServiceDispatcher("/z2/services")
+        basicWebsocketServiceCallTransport("/z2/services")
     }
 }
 ```
@@ -346,6 +388,8 @@ message ComplexResponsePayload {
 ```
 
 ## Plugin Development
+
+Projects are independent, you have to use "Link Gradle Project" one-by-one.
 
 `z2-service-kotlin-plugin` contains the source code of the compiler plugin.
 

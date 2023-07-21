@@ -6,7 +6,6 @@ package hu.simplexion.z2.service.kotlin.ir
 import hu.simplexion.z2.service.kotlin.ir.util.ServiceFunctionCache
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.jvm.functionByName
-import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
 import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.util.constructors
 import org.jetbrains.kotlin.name.CallableId
@@ -61,8 +60,6 @@ class ServicePluginContext(
     val serviceContextType = SERVICE_CONTEXT_CLASS.runtimeClass().defaultType
 
     val notImplementedErrorClass = NOT_IMPLEMENTED_ERROR.runtimeClass(KOTLIN)
-
-    val typeSystem = IrTypeSystemContextImpl(irContext.irBuiltIns)
 
     val serviceFunctionCache = ServiceFunctionCache()
 
