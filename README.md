@@ -139,7 +139,7 @@ from the `z2-service-ktor` module provides a basic web socket transport implemen
 
 ```kotlin
 defaultServiceCallTransport = BasicWebSocketServiceTransport(
-    window.location.host,
+    window.location.hostname,
     window.location.port.toInt(),
     "/z2/services"
 ).also {
