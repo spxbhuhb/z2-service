@@ -50,6 +50,10 @@ class ServicePluginContext(
     val protoOneByteArray = PROTO_ONE_BYTEARRAY.runtimeClass(PROTO_PACKAGE)
     val protoOneUuid = PROTO_ONE_UUID.runtimeClass(PROTO_PACKAGE)
 
+    val serviceContextType = SERVICE_CONTEXT_CLASS.runtimeClass().defaultType
+
+    val notImplementedErrorClass = NOT_IMPLEMENTED_ERROR.runtimeClass(KOTLIN)
+
     val typeSystem = IrTypeSystemContextImpl(irContext.irBuiltIns)
 
     val serviceFunctionCache = ServiceFunctionCache()

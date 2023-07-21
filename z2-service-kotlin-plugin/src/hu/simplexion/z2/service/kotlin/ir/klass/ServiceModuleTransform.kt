@@ -18,9 +18,9 @@ class ServiceModuleTransform(
             return declaration.accept(ServiceConsumerClassTransform(pluginContext), null) as IrStatement
         }
 
-//        if (declaration.superTypes.contains(pluginContext.serviceProviderType)) {
-//            return declaration.accept(ServiceProviderClassTransform(pluginContext), null) as IrStatement
-//        }
+        if (declaration.superTypes.contains(pluginContext.serviceProviderType)) {
+            return declaration.accept(ServiceProviderClassTransform(pluginContext), null) as IrStatement
+        }
 
         return declaration
     }

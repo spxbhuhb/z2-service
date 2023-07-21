@@ -16,6 +16,9 @@ const val GLOBALS_CLASS = "GlobalsKt"
 const val DEFAULT_SERVICE_CALL_TRANSPORT = "defaultServiceCallTransport"
 
 val FUN_NAMES_TO_SKIP = listOf("service", "equals", "hashCode", "toString")
+const val SERVICE_CONTEXT_PROPERTY = "serviceContext"
+const val SERVICE_CONTEXT_ARG_NAME = "serviceContext"
+const val SERVICE_CONTEXT_CLASS = "ServiceContext"
 
 const val SERVICE_CALL_TRANSPORT_CLASS = "ServiceCallTransport"
 const val CALL_FUNCTION = "call"
@@ -47,3 +50,6 @@ const val BUILDER_CALL_VALUE_INDEX = 1 // index of the value in ProtoMessageBuil
 
 const val UTIL_PACKAGE = "hu.simplexion.z2.commons.util"
 const val UUID = "UUID"
+
+const val KOTLIN = "kotlin"
+const val NOT_IMPLEMENTED_ERROR = "NotImplementedError"

@@ -4,7 +4,6 @@
 package hu.simplexion.z2.service.kotlin.ir.klass
 
 import hu.simplexion.z2.service.kotlin.ir.*
-import hu.simplexion.z2.service.kotlin.ir.util.IrBuilder
 import org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext
 import org.jetbrains.kotlin.backend.common.ir.addDispatchReceiver
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
@@ -25,22 +24,20 @@ import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.types.defaultType
-import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.util.SYNTHETIC_OFFSET
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
-import kotlin.contracts.ExperimentalContracts
-import kotlin.contracts.contract
 
 
 class ServiceConsumerClassTransform(
     override val pluginContext: ServicePluginContext,
-) : IrElementTransformerVoidWithContext(), IrBuilder {
+) : IrElementTransformerVoidWithContext(), ServiceBuilder {
 
-    lateinit var transformedClass: IrClass
-    lateinit var serviceNameGetter: IrSimpleFunctionSymbol
+    override lateinit var transformedClass: IrClass
 
-    val serviceFunctions = mutableListOf<IrSimpleFunctionSymbol>()
+    override lateinit var serviceNameGetter: IrSimpleFunctionSymbol
+
+    override val serviceFunctions = mutableListOf<IrSimpleFunctionSymbol>()
 
     override fun visitClassNew(declaration: IrClass): IrStatement {
         if (::transformedClass.isInitialized) return declaration
@@ -52,67 +49,40 @@ class ServiceConsumerClassTransform(
         return super.visitClassNew(declaration)
     }
 
-    private fun collectServiceFunctions() {
-        for (superType in transformedClass.superTypes) {
-            if (superType.isSubtypeOfClass(pluginContext.serviceClass)) {
-                serviceFunctions += pluginContext.serviceFunctionCache[superType]
-            }
-        }
-    }
-
     override fun visitFunctionNew(declaration: IrFunction): IrStatement {
-        if (!isServiceFun(declaration)) return declaration
+        val function = declaration.asServiceFun() ?: return declaration
 
-        declaration.origin = IrDeclarationOrigin.DEFINED
-        declaration.isFakeOverride =false
+        function.origin = IrDeclarationOrigin.DEFINED
+        function.isFakeOverride =false
 
-        declaration.addDispatchReceiver {
+        function.addDispatchReceiver {
             type = transformedClass.defaultType
         }
 
-        declaration.body = DeclarationIrBuilder(irContext, declaration.symbol).irBlockBody {
+        declaration.body = DeclarationIrBuilder(irContext, function.symbol).irBlockBody {
             +irReturn(
                 irCall(
                     pluginContext.callFunction,
                     dispatchReceiver = getServiceTransport()
                 ).also {
-                    it.type = declaration.returnType
-                    it.putTypeArgument(CALL_TYPE_INDEX, declaration.returnType)
-                    it.putValueArgument(CALL_SERVICE_NAME_INDEX, getServiceName(declaration))
-                    it.putValueArgument(CALL_FUN_NAME_INDEX, irConst(declaration.name.identifier))
-                    it.putValueArgument(CALL_PAYLOAD_INDEX, buildPayload(declaration))
-                    it.putValueArgument(CALL_DECODER_INDEX, getDecoder(declaration.returnType))
+                    it.type = function.returnType
+                    it.putTypeArgument(CALL_TYPE_INDEX, function.returnType)
+                    it.putValueArgument(CALL_SERVICE_NAME_INDEX, getServiceName(function))
+                    it.putValueArgument(CALL_FUN_NAME_INDEX, irConst(function.name.identifier))
+                    it.putValueArgument(CALL_PAYLOAD_INDEX, buildPayload(function))
+                    it.putValueArgument(CALL_DECODER_INDEX, getDecoder(function.returnType))
                 }
             )
         }
 
-        return super.visitFunctionNew(declaration)
+        return super.visitFunctionNew(function)
     }
 
-    @OptIn(ExperimentalContracts::class)
-    fun isServiceFun(declaration: IrFunction): Boolean {
-        contract {
-            returns(true) implies (declaration is IrSimpleFunction)
-        }
-        if (declaration !is IrSimpleFunction) return false
-        if (!declaration.isFakeOverride) return false
-        for (overriddenSymbol in declaration.overriddenSymbols) {
-            if (overriddenSymbol in serviceFunctions) return true
-        }
-        return false
-    }
 
     fun getServiceTransport(): IrCallImpl =
         irCall(
             pluginContext.defaultServiceCallTransport,
             IrStatementOrigin.GET_PROPERTY
-        )
-
-    fun getServiceName(function: IrSimpleFunction): IrCallImpl =
-        irCall(
-            serviceNameGetter,
-            IrStatementOrigin.GET_PROPERTY,
-            dispatchReceiver = irGet(checkNotNull(function.dispatchReceiverParameter))
         )
 
     fun buildPayload(function: IrSimpleFunction): IrExpression {
