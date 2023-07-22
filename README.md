@@ -77,15 +77,15 @@ class HelloServiceProvider : HelloService, ServiceProvider {
 }
 ```
 
-#### Service Registy
+#### Service Registries
 
 Typically, you register your service providers during application startup some way, so the server knows that they are available.
 
-You can use `defaultServiceProviderRegistry` for this or implement your own way to store the services. These
-registries are used by the transports to find the service.
+You can use [defaultServiceProviderRegistry](/z2-service-runtime/src/commonMain/kotlin/hu/simplexion/z2/service/runtime/globals.kt)
+for this or implement your own way to store the services. These registries are used by the transports to find the service.
 
 ```kotlin
-HelloServiceProvider().also { defaultServiceProviderRegistry[it.serviceName] = it }
+defaultServiceProviderRegistry += HelloServiceProvider()
 ```
 
 #### Service Context
@@ -170,7 +170,7 @@ fun Application.module() {
         masking = false
     }
 
-    HelloServiceProvider().also { defaultServiceProviderRegistry[it.serviceName] = it }
+    defaultServiceProviderRegistry += HelloServiceProvider()
 
     routing {
         basicWebsocketServiceCallTransport("/z2/services")

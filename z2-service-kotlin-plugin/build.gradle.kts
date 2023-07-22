@@ -2,7 +2,6 @@
  * Copyright © 2022-2023, Simplexion, Hungary and contributors. Use of this source code is governed by the Apache 2.0 license.
  */
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import java.net.URI
 
 plugins {
     java
@@ -18,10 +17,8 @@ val kotlin_version: String by project.properties
 val z2_version: String by project.properties
 
 repositories {
+    mavenLocal()
     mavenCentral()
-    maven {
-        url = URI("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-    }
 }
 
 sourceSets {

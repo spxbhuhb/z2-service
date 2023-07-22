@@ -9,11 +9,11 @@ import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.types.checker.SimpleClassicTypeSystemContext.getArgument
+import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 
 class ProtoMessageIrBuilder(
     override val pluginContext: ServicePluginContext,
-    val dispatchReceiver : IrExpression
+    val dispatchReceiver: IrExpression
 ) : IrBuilder {
 
     var current: IrExpression? = null
@@ -33,10 +33,11 @@ class ProtoMessageIrBuilder(
             irBuiltIns.intType -> pluginContext.protoMessageInt
             irBuiltIns.longType -> pluginContext.protoMessageLong
             irBuiltIns.stringType -> pluginContext.protoMessageString
-            irBuiltIns.byteArray -> pluginContext.protoMessageByteArray
-            pluginContext.uuidType -> pluginContext.protoMessageUuid
             else -> null
-        } ?: return null
+        }
+            ?: valueParameter.type.ifUuid { pluginContext.protoMessageUuid }
+            ?: valueParameter.type.ifByteArray { pluginContext.protoMessageByteArray }
+            ?: return null
 
         current = irCall(
             builderFun,
@@ -49,17 +50,23 @@ class ProtoMessageIrBuilder(
     }
 
     fun primitiveList(valueParameter: IrValueParameter): Boolean? {
-        if (valueParameter.type != irBuiltIns.listClass) return null
+        val type = valueParameter.type
 
-        val builderFun = when (valueParameter.type.getArgument(0)) {
-            irBuiltIns.booleanType -> pluginContext.protoMessageBooleanList
+        if (!type.isList) return null
+
+        // FIXME hackish list item type retrieval
+        val itemType = (type as IrSimpleTypeImpl).arguments.first() as IrType
+
+        val builderFun = when (itemType) {
             irBuiltIns.intType -> pluginContext.protoMessageIntList
             irBuiltIns.longType -> pluginContext.protoMessageLongList
             irBuiltIns.stringType -> pluginContext.protoMessageStringList
-            irBuiltIns.byteArray -> pluginContext.protoMessageByteArrayList
-            pluginContext.uuidType -> pluginContext.protoMessageUuidList
             else -> null
-        } ?: return null
+        }
+            ?: itemType.ifBoolean { pluginContext.protoMessageBooleanList }
+            ?: itemType.ifUuid { pluginContext.protoMessageUuidList }
+            ?: itemType.ifByteArray { pluginContext.protoMessageByteArrayList }
+            ?: return null
 
         current = irCall(
             builderFun,
@@ -80,11 +87,16 @@ class ProtoMessageIrBuilder(
     }
 
     fun instanceList(valueParameter: IrValueParameter): Boolean? {
-        if (valueParameter.type != irBuiltIns.listClass) return null
+        val type = valueParameter.type
 
-        val encoder = pluginContext.protoCache[valueParameter.type.getArgument(0) as IrType]?.symbol ?: return null
+        if (!type.isList) return null
 
-        decode(valueParameter, encoder, pluginContext.protoMessageList)
+        // FIXME hackish list item type retrieval
+        val itemType = (type as IrSimpleTypeImpl).arguments.first() as IrType
+
+        val encoder = pluginContext.protoCache[itemType]?.symbol ?: return null
+
+        decode(valueParameter, encoder, pluginContext.protoMessageInstanceList)
 
         return true
     }

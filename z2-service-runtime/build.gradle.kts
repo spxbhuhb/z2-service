@@ -1,5 +1,3 @@
-import java.net.URI
-
 /*
  * Copyright © 2020-2023, Simplexion, Hungary and contributors. Use of this source code is governed by the Apache 2.0 license.
  */
@@ -21,11 +19,8 @@ val scmPath = "spxbhuhb/z2-service"
 
 repositories {
     mavenLocal()
-    google()
     mavenCentral()
-    maven {
-        url = URI("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-    }
+    google()
 }
 
 kotlin {

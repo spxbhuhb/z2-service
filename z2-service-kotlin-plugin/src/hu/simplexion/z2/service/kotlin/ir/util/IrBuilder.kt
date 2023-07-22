@@ -15,9 +15,13 @@ import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.*
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.getPrimitiveType
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
+import org.jetbrains.kotlin.ir.types.isBoolean
+import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.util.SYNTHETIC_OFFSET
 import org.jetbrains.kotlin.ir.util.defaultType
+import org.jetbrains.kotlin.ir.util.getPrimitiveArrayElementType
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.util.OperatorNameConventions
@@ -199,7 +203,7 @@ interface IrBuilder {
         return irGet(variable.type, variable.symbol, origin)
     }
 
-    fun irGetObject(symbol : IrClassSymbol) = IrGetObjectValueImpl(
+    fun irGetObject(symbol: IrClassSymbol) = IrGetObjectValueImpl(
         SYNTHETIC_OFFSET,
         SYNTHETIC_OFFSET,
         IrSimpleTypeImpl(symbol, false, emptyList(), emptyList()),
@@ -341,4 +345,25 @@ interface IrBuilder {
     val String.name: Name
         get() = Name.identifier(this)
 
+    val IrType.isList
+        get() = isSubtypeOfClass(pluginContext.listClass)
+
+    fun <T> IrType.ifBoolean(result: () -> T): T? =
+        if (isBoolean()) result() else null
+
+    fun <T> IrType.ifByteArray(result: () -> T): T? {
+        return if (getPrimitiveArrayElementType() == irBuiltIns.byteType.getPrimitiveType()) {
+            result()
+        } else {
+            null
+        }
+    }
+
+    fun <T> IrType.ifUuid(result: () -> T): T? {
+        return if (this.isSubtypeOfClass(pluginContext.uuidType)) {
+            result()
+        } else {
+            null
+        }
+    }
 }

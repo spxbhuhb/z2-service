@@ -25,12 +25,12 @@ abstract class BaseTestRunner : AbstractKotlinCompilerTest() {
     }
 }
 
-fun TestConfigurationBuilder.commonFirWithPluginFrontendConfiguration() {
+fun TestConfigurationBuilder.commonFirWithPluginFrontendConfiguration(dumpFir : Boolean = true) {
     baseFirDiagnosticTestConfiguration()
 
     defaultDirectives {
         + FirDiagnosticsDirectives.ENABLE_PLUGIN_PHASES
-        + FirDiagnosticsDirectives.FIR_DUMP
+        if (dumpFir) + FirDiagnosticsDirectives.FIR_DUMP
     }
 
     useConfigurators(

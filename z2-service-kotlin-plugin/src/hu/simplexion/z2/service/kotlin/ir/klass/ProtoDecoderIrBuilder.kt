@@ -6,8 +6,8 @@ import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.defaultType
+import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.util.SYNTHETIC_OFFSET
-import org.jetbrains.kotlin.types.checker.SimpleClassicTypeSystemContext.getArgument
 
 class ProtoDecoderIrBuilder(
     override val pluginContext: ServicePluginContext,
@@ -27,23 +27,26 @@ class ProtoDecoderIrBuilder(
             irBuiltIns.intType -> irGetObject(pluginContext.protoOneInt)
             irBuiltIns.longType -> irGetObject(pluginContext.protoOneLong)
             irBuiltIns.stringType -> irGetObject(pluginContext.protoOneString)
-            irBuiltIns.byteArray -> irGetObject(pluginContext.protoOneByteArray)
-            pluginContext.uuidType -> irGetObject(pluginContext.protoOneUuid)
             else -> null
         }
+            ?: type.ifUuid { irGetObject(pluginContext.protoOneUuid) }
+            ?: type.ifByteArray { irGetObject(pluginContext.protoOneByteArray) }
 
     fun primitiveList(type: IrType): IrExpression? {
-        if (type != irBuiltIns.listClass) return null
+        if (!type.isList) return null
 
-        return when (type.getArgument(0)) {
-            irBuiltIns.booleanType -> irGetObject(pluginContext.protoOneBooleanList)
+        // FIXME hackish list item type retrieval
+        val itemType = (type as IrSimpleTypeImpl).arguments.first() as IrType
+
+        return when (itemType) {
             irBuiltIns.intType -> irGetObject(pluginContext.protoOneIntList)
             irBuiltIns.longType -> irGetObject(pluginContext.protoOneLongList)
             irBuiltIns.stringType -> irGetObject(pluginContext.protoOneStringList)
-            irBuiltIns.byteArray -> irGetObject(pluginContext.protoOneByteArrayList)
-            pluginContext.uuidType -> irGetObject(pluginContext.protoOneUuidList)
             else -> null
         }
+            ?: itemType.ifBoolean { irGetObject(pluginContext.protoOneBooleanList) }
+            ?: itemType.ifUuid { irGetObject(pluginContext.protoOneUuidList) }
+            ?: itemType.ifByteArray { irGetObject(pluginContext.protoOneByteArrayList) }
     }
 
     fun instance(type: IrType): IrExpression? {
@@ -52,13 +55,17 @@ class ProtoDecoderIrBuilder(
     }
 
     fun instanceList(type: IrType): IrExpression? {
-        if (type != irBuiltIns.listClass) return null
-        val encoder = pluginContext.protoCache[type.getArgument(0) as IrType]?.symbol ?: return null
+        if (!type.isList) return null
+
+        // FIXME hackish list item type retrieval
+        val itemType = (type as IrSimpleTypeImpl).arguments.first() as IrType
+
+        val encoder = pluginContext.protoCache[itemType]?.symbol ?: return null
 
         return IrConstructorCallImpl(
             SYNTHETIC_OFFSET, SYNTHETIC_OFFSET,
-            pluginContext.protoOneList.defaultType,
-            pluginContext.protoOneListConstructor,
+            pluginContext.protoOneInstanceList.defaultType,
+            pluginContext.protoOneInstanceListConstructor,
             0, 0, 1
         ).also {
             it.putValueArgument(0, irGetObject(encoder))

@@ -49,7 +49,7 @@ class ServicePluginContext(
     val protoBuilderStringList = protoMessageBuilderClass.functionByName(PROTO_BUILDER_STRING_LIST)
     val protoBuilderByteArrayList = protoMessageBuilderClass.functionByName(PROTO_BUILDER_BYTEARRAY_LIST)
     val protoBuilderUuidList = protoMessageBuilderClass.functionByName(PROTO_BUILDER_UUID_LIST)
-    val protoBuilderList = protoMessageBuilderClass.functionByName(PROTO_BUILDER_LIST)
+    val protoBuilderInstanceList = protoMessageBuilderClass.functionByName(PROTO_BUILDER_INSTANCE_LIST)
 
     val protoMessageClass = PROTO_MESSAGE_CLASS.runtimeClass(PROTO_PACKAGE)
 
@@ -67,9 +67,9 @@ class ServicePluginContext(
     val protoMessageStringList = protoMessageClass.functionByName(PROTO_MESSAGE_STRING_LIST)
     val protoMessageByteArrayList = protoMessageClass.functionByName(PROTO_MESSAGE_BYTEARRAY_LIST)
     val protoMessageUuidList = protoMessageClass.functionByName(PROTO_MESSAGE_UUID_LIST)
-    val protoMessageList = protoMessageClass.functionByName(PROTO_MESSAGE_LIST)
+    val protoMessageInstanceList = protoMessageClass.functionByName(PROTO_MESSAGE_INSTANCE_LIST)
 
-    val uuidType = UUID.runtimeClass(UTIL_PACKAGE).defaultType
+    val uuidType = UUID.runtimeClass(UTIL_PACKAGE)
 
     val protoOneBoolean = PROTO_ONE_BOOLEAN.runtimeClass(PROTO_PACKAGE)
     val protoOneInt = PROTO_ONE_INT.runtimeClass(PROTO_PACKAGE)
@@ -85,8 +85,8 @@ class ServicePluginContext(
     val protoOneByteArrayList = PROTO_ONE_BYTEARRAY_LIST.runtimeClass(PROTO_PACKAGE)
     val protoOneUuidList = PROTO_ONE_UUID_LIST.runtimeClass(PROTO_PACKAGE)
 
-    val protoOneList = PROTO_ONE_LIST.runtimeClass(PROTO_PACKAGE)
-    val protoOneListConstructor = PROTO_ONE_LIST.runtimeClass(PROTO_PACKAGE).constructors.first()
+    val protoOneInstanceList = PROTO_ONE_INSTANCE_LIST.runtimeClass(PROTO_PACKAGE)
+    val protoOneInstanceListConstructor = protoOneInstanceList.constructors.first()
 
     val protoEncoderClass = PROTO_ENCODER_CLASS.runtimeClass(PROTO_PACKAGE).owner
     val protoDecoderClass = PROTO_DECODER_CLASS.runtimeClass(PROTO_PACKAGE).owner
@@ -94,6 +94,7 @@ class ServicePluginContext(
     val serviceContextType = SERVICE_CONTEXT_CLASS.runtimeClass().defaultType
 
     val notImplementedErrorClass = NOT_IMPLEMENTED_ERROR.runtimeClass(KOTLIN)
+    val listClass = LIST.runtimeClass(KOTLIN_COLLECTIONS)
 
     val serviceFunctionCache = ServiceFunctionCache()
     val protoCache = ProtoCache(this)
