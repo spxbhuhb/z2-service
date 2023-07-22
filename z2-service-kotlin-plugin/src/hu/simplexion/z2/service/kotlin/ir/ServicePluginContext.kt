@@ -3,6 +3,7 @@
  */
 package hu.simplexion.z2.service.kotlin.ir
 
+import hu.simplexion.z2.service.kotlin.ir.util.ProtoCache
 import hu.simplexion.z2.service.kotlin.ir.util.ServiceFunctionCache
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.jvm.functionByName
@@ -33,20 +34,40 @@ class ServicePluginContext(
     val protoMessageBuilderClass = PROTO_MESSAGE_BUILDER_CLASS.runtimeClass(PROTO_PACKAGE)
     val protoMessageBuilderConstructor = protoMessageBuilderClass.constructors.first()
     val protoBuilderPack = protoMessageBuilderClass.functionByName(PROTO_BUILDER_PACK)
+
     val protoBuilderBoolean = protoMessageBuilderClass.functionByName(PROTO_BUILDER_BOOLEAN)
     val protoBuilderInt = protoMessageBuilderClass.functionByName(PROTO_BUILDER_INT)
     val protoBuilderLong = protoMessageBuilderClass.functionByName(PROTO_BUILDER_LONG)
     val protoBuilderString = protoMessageBuilderClass.functionByName(PROTO_BUILDER_STRING)
     val protoBuilderByteArray = protoMessageBuilderClass.functionByName(PROTO_BUILDER_BYTEARRAY)
     val protoBuilderUuid = protoMessageBuilderClass.functionByName(PROTO_BUILDER_UUID)
+    val protoBuilderInstance = protoMessageBuilderClass.functionByName(PROTO_BUILDER_INSTANCE)
+
+    val protoBuilderBooleanList = protoMessageBuilderClass.functionByName(PROTO_BUILDER_BOOLEAN_LIST)
+    val protoBuilderIntList = protoMessageBuilderClass.functionByName(PROTO_BUILDER_INT_LIST)
+    val protoBuilderLongList = protoMessageBuilderClass.functionByName(PROTO_BUILDER_LONG_LIST)
+    val protoBuilderStringList = protoMessageBuilderClass.functionByName(PROTO_BUILDER_STRING_LIST)
+    val protoBuilderByteArrayList = protoMessageBuilderClass.functionByName(PROTO_BUILDER_BYTEARRAY_LIST)
+    val protoBuilderUuidList = protoMessageBuilderClass.functionByName(PROTO_BUILDER_UUID_LIST)
+    val protoBuilderList = protoMessageBuilderClass.functionByName(PROTO_BUILDER_LIST)
 
     val protoMessageClass = PROTO_MESSAGE_CLASS.runtimeClass(PROTO_PACKAGE)
+
     val protoMessageBoolean = protoMessageClass.functionByName(PROTO_MESSAGE_BOOLEAN)
     val protoMessageInt = protoMessageClass.functionByName(PROTO_MESSAGE_INT)
     val protoMessageLong = protoMessageClass.functionByName(PROTO_MESSAGE_LONG)
     val protoMessageString = protoMessageClass.functionByName(PROTO_MESSAGE_STRING)
     val protoMessageByteArray = protoMessageClass.functionByName(PROTO_MESSAGE_BYTEARRAY)
     val protoMessageUuid = protoMessageClass.functionByName(PROTO_MESSAGE_UUID)
+    val protoMessageInstance = protoMessageClass.functionByName(PROTO_MESSAGE_INSTANCE)
+
+    val protoMessageBooleanList = protoMessageClass.functionByName(PROTO_MESSAGE_BOOLEAN_LIST)
+    val protoMessageIntList = protoMessageClass.functionByName(PROTO_MESSAGE_INT_LIST)
+    val protoMessageLongList = protoMessageClass.functionByName(PROTO_MESSAGE_LONG_LIST)
+    val protoMessageStringList = protoMessageClass.functionByName(PROTO_MESSAGE_STRING_LIST)
+    val protoMessageByteArrayList = protoMessageClass.functionByName(PROTO_MESSAGE_BYTEARRAY_LIST)
+    val protoMessageUuidList = protoMessageClass.functionByName(PROTO_MESSAGE_UUID_LIST)
+    val protoMessageList = protoMessageClass.functionByName(PROTO_MESSAGE_LIST)
 
     val uuidType = UUID.runtimeClass(UTIL_PACKAGE).defaultType
 
@@ -57,11 +78,25 @@ class ServicePluginContext(
     val protoOneByteArray = PROTO_ONE_BYTEARRAY.runtimeClass(PROTO_PACKAGE)
     val protoOneUuid = PROTO_ONE_UUID.runtimeClass(PROTO_PACKAGE)
 
+    val protoOneBooleanList = PROTO_ONE_BOOLEAN_LIST.runtimeClass(PROTO_PACKAGE)
+    val protoOneIntList = PROTO_ONE_INT_LIST.runtimeClass(PROTO_PACKAGE)
+    val protoOneLongList = PROTO_ONE_LONG_LIST.runtimeClass(PROTO_PACKAGE)
+    val protoOneStringList = PROTO_ONE_STRING_LIST.runtimeClass(PROTO_PACKAGE)
+    val protoOneByteArrayList = PROTO_ONE_BYTEARRAY_LIST.runtimeClass(PROTO_PACKAGE)
+    val protoOneUuidList = PROTO_ONE_UUID_LIST.runtimeClass(PROTO_PACKAGE)
+
+    val protoOneList = PROTO_ONE_LIST.runtimeClass(PROTO_PACKAGE)
+    val protoOneListConstructor = PROTO_ONE_LIST.runtimeClass(PROTO_PACKAGE).constructors.first()
+
+    val protoEncoderClass = PROTO_ENCODER_CLASS.runtimeClass(PROTO_PACKAGE).owner
+    val protoDecoderClass = PROTO_DECODER_CLASS.runtimeClass(PROTO_PACKAGE).owner
+
     val serviceContextType = SERVICE_CONTEXT_CLASS.runtimeClass().defaultType
 
     val notImplementedErrorClass = NOT_IMPLEMENTED_ERROR.runtimeClass(KOTLIN)
 
     val serviceFunctionCache = ServiceFunctionCache()
+    val protoCache = ProtoCache(this)
 
     fun String.runtimeClass(pkg: String = RUNTIME_PACKAGE) =
         checkNotNull(irContext.referenceClass(ClassId(FqName(pkg), Name.identifier(this)))) {

@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext
 import org.jetbrains.kotlin.backend.common.ir.addDispatchReceiver
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.ir.IrStatement
-import org.jetbrains.kotlin.ir.builders.IrBlockBodyBuilder
 import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irGetObject
 import org.jetbrains.kotlin.ir.builders.irReturn
@@ -21,8 +20,6 @@ import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
-import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.util.SYNTHETIC_OFFSET
 import org.jetbrains.kotlin.ir.util.defaultType
@@ -70,7 +67,7 @@ class ServiceConsumerClassTransform(
                     it.putValueArgument(CALL_SERVICE_NAME_INDEX, getServiceName(function))
                     it.putValueArgument(CALL_FUN_NAME_INDEX, irConst(function.name.identifier))
                     it.putValueArgument(CALL_PAYLOAD_INDEX, buildPayload(function))
-                    it.putValueArgument(CALL_DECODER_INDEX, getDecoder(function.returnType))
+                    it.putValueArgument(CALL_DECODER_INDEX, ProtoDecoderIrBuilder(pluginContext).getDecoder(function.returnType))
                 }
             )
         }
@@ -86,39 +83,17 @@ class ServiceConsumerClassTransform(
         )
 
     fun buildPayload(function: IrSimpleFunction): IrExpression {
-        var current: IrExpression = IrConstructorCallImpl(
-            SYNTHETIC_OFFSET, SYNTHETIC_OFFSET,
-            pluginContext.protoMessageBuilderClass.defaultType,
-            pluginContext.protoMessageBuilderConstructor,
-            0, 0, 0
-        )
+        val protoBuilder = ProtoMessageBuilderIrBuilder(pluginContext)
 
         for (valueParameter in function.valueParameters) {
-
-            current = irCall(
-                requireNotNull(valueParameter.type.protoBuilderFun())  { "unsupported type: ${valueParameter.symbol} function: ${function.symbol}" },
-                dispatchReceiver = current
-            ).also {
-                it.putValueArgument(BUILDER_CALL_FIELD_NUMBER_INDEX, irConst(valueParameter.index + 1))
-                it.putValueArgument(BUILDER_CALL_VALUE_INDEX, irGet(valueParameter))
-            }
+            protoBuilder.next(valueParameter)
+            check(protoBuilder.valid) { "unsupported type: ${valueParameter.symbol} function: ${function.symbol}" }
         }
 
         return irCall(
             pluginContext.protoBuilderPack,
-            dispatchReceiver = current
+            dispatchReceiver = protoBuilder.current
         )
     }
-
-    fun IrBlockBodyBuilder.getDecoder(type: IrType): IrExpression =
-        when (type) {
-            irBuiltIns.booleanType -> irGetObject(pluginContext.protoOneBoolean)
-            irBuiltIns.intType -> irGetObject(pluginContext.protoOneInt)
-            irBuiltIns.longType -> irGetObject(pluginContext.protoOneLong)
-            irBuiltIns.stringType -> irGetObject(pluginContext.protoOneString)
-            irBuiltIns.byteArray -> irGetObject(pluginContext.protoOneByteArray)
-            pluginContext.uuidType -> irGetObject(pluginContext.protoOneUuid)
-            else -> throw IllegalArgumentException("unsupported return type: ${type.classFqName}")
-        }
 
 }

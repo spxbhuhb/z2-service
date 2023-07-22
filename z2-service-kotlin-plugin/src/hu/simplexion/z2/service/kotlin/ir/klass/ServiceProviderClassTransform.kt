@@ -30,7 +30,6 @@ class ServiceProviderClassTransform(
 
     override lateinit var transformedClass: IrClass
 
-    lateinit var dispatch: IrSimpleFunction
     override lateinit var serviceNameGetter: IrSimpleFunctionSymbol
     lateinit var serviceContextGetter: IrSimpleFunctionSymbol
 
@@ -182,13 +181,15 @@ class ServiceProviderClassTransform(
                 IrStatementOrigin.EQEQ
             ),
             irImplicitCoercionToUnit(
-                irCall(
-                    requireNotNull(serviceFunction.returnType.protoBuilderFun()) { "unsupported type return type: ${serviceFunction.symbol}" },
-                    dispatchReceiver = irGet(dispatch.valueParameters[DISPATCH_RESPONSE_INDEX]),
-                ).also {
-                    it.putValueArgument(BUILDER_CALL_FIELD_NUMBER_INDEX, irConst(1))
-                    it.putValueArgument(BUILDER_CALL_VALUE_INDEX, callServiceFunction(dispatch, serviceFunction))
-                }
+                requireNotNull(
+                    ProtoMessageBuilderIrBuilder(
+                        pluginContext,
+                        irGet(dispatch.valueParameters[DISPATCH_RESPONSE_INDEX])
+                    ).next(
+                        serviceFunction.returnType,
+                        1
+                    ) { callServiceFunction(dispatch, serviceFunction) }
+                ) { "unsupported type return type: ${serviceFunction.symbol}" }
             )
         )
 
@@ -204,11 +205,12 @@ class ServiceProviderClassTransform(
 
                 it.putValueArgument(
                     index,
-                    irCall(
-                        requireNotNull(valueParameter.type.protoMessageFun()) { "unsupported argument type ${valueParameter.symbol} in ${serviceFunction.symbol}" },
-                        dispatchReceiver = irGet(dispatch.valueParameters[DISPATCH_PAYLOAD_INDEX]),
-                        args = arrayOf(irConst(index + 1))
-                    )
+                    requireNotNull(
+                        ProtoMessageIrBuilder(
+                            pluginContext,
+                            irGet(dispatch.valueParameters[DISPATCH_PAYLOAD_INDEX])
+                        ).get(valueParameter)
+                    ) { "unsupported type argument type: ${valueParameter.symbol}" }
                 )
             }
 
