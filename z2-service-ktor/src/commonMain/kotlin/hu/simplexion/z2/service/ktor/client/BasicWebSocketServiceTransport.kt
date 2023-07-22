@@ -53,7 +53,7 @@ class BasicWebSocketServiceTransport(
                     launch {
                         for (call in outgoingCalls) {
                             pendingCalls[call.request.callId] = call
-                            send(Frame.Binary(false, RequestEnvelope.encodeProto(call.request)))
+                            send(Frame.Binary(true, RequestEnvelope.encodeProto(call.request)))
                         }
                     }
 

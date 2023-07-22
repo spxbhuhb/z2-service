@@ -34,7 +34,7 @@ class ResponseEnvelope(
             ProtoMessageBuilder()
                 .uuid(1, value.callId)
                 .int(2, value.status.value)
-                .byteArray(4, value.payload)
+                .byteArray(3, value.payload)
                 .pack()
     }
 

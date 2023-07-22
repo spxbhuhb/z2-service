@@ -50,7 +50,7 @@ fun Routing.basicWebsocketServiceCallTransport(path: String = "/z2/service") {
                     )
                 }
 
-                send(Frame.Binary(false, ResponseEnvelope.encodeProto(responseEnvelope)))
+                send(Frame.Binary(true, ResponseEnvelope.encodeProto(responseEnvelope)))
             }
 
         } catch (e: Exception) {
