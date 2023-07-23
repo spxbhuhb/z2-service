@@ -51,7 +51,15 @@ class ProtoDecoderIrBuilder(
 
     fun instance(type: IrType): IrExpression? {
         val encoder = pluginContext.protoCache[type]?.symbol ?: return null
-        return irGetObject(encoder)
+
+        return IrConstructorCallImpl(
+            SYNTHETIC_OFFSET, SYNTHETIC_OFFSET,
+            pluginContext.protoOneInstance.defaultType,
+            pluginContext.protoOneInstanceConstructor,
+            0, 0, 1
+        ).also {
+            it.putValueArgument(0, irGetObject(encoder))
+        }
     }
 
     fun instanceList(type: IrType): IrExpression? {

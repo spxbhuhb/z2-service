@@ -1,12 +1,10 @@
 package hu.simplexion.z2.service.runtime.test.box
 
-import hu.simplexion.z2.commons.protobuf.ProtoDecoder
-import hu.simplexion.z2.commons.protobuf.ProtoEncoder
-import hu.simplexion.z2.commons.protobuf.ProtoMessage
-import hu.simplexion.z2.commons.protobuf.ProtoMessageBuilder
+import hu.simplexion.z2.commons.protobuf.*
 import hu.simplexion.z2.commons.util.UUID
 import hu.simplexion.z2.service.runtime.*
 import kotlinx.coroutines.runBlocking
+import hu.simplexion.z2.service.runtime.transport.ServiceCallTransport
 
 fun box(): String {
     val booleanVal = true
@@ -33,25 +31,26 @@ fun box(): String {
     val errors = mutableListOf<String>()
 
     runBlocking {
+        defaultServiceCallTransport = DumpTransport()
         defaultServiceProviderRegistry += TypesServiceProvider()
 
         if (TypesServiceConsumer.testFun(booleanVal) != booleanVal) errors += "booleanValue"
-//        if (TypesServiceConsumer.testFun(intVal) != intVal) errors += "intVal"
-//        if (TypesServiceConsumer.testFun(longVal) != longVal) errors += "longVal"
-//        if (TypesServiceConsumer.testFun(stringVal) != stringVal) errors += "stringVal"
-//        if (!TypesServiceConsumer.testFun(byteArrayVal).contentEquals(byteArrayVal)) errors += "byteArrayVal"
-//        if (TypesServiceConsumer.testFun(uuidVal) != uuidVal) errors += "uuidVal"
-//        if (TypesServiceConsumer.testFun(instanceVal) != instanceVal) errors += "instanceVal"
-//
-//        if (TypesServiceConsumer.testBooleanList(booleanListVal) == booleanListVal) errors += "booleanListVal"
-//        if (TypesServiceConsumer.testIntList(intListVal) != intListVal) errors += "intListVal"
-//        if (TypesServiceConsumer.testLongList(longListVal) != longListVal) errors += "longListVal"
-//        if (TypesServiceConsumer.testStringList(stringListVal) != stringListVal) errors += "stringListVal"
-//        TypesServiceConsumer.testByteArrayList(byteArrayListVal).forEachIndexed { index, bytes ->
-//            if (!bytes.contentEquals(byteArrayListVal[index])) errors += "byteArrayListVal"
-//        }
-//        if (TypesServiceConsumer.testUuidList(uuidListVal) != uuidListVal) errors += "uuidListVal"
-//        if (TypesServiceConsumer.testInstanceList(instanceListVal) != instanceListVal) errors += "instanceListVal"
+        if (TypesServiceConsumer.testFun(intVal) != intVal) errors += "intVal"
+        if (TypesServiceConsumer.testFun(longVal) != longVal) errors += "longVal"
+        if (TypesServiceConsumer.testFun(stringVal) != stringVal) errors += "stringVal"
+        if (!TypesServiceConsumer.testFun(byteArrayVal).contentEquals(byteArrayVal)) errors += "byteArrayVal"
+        if (TypesServiceConsumer.testFun(uuidVal) != uuidVal) errors += "uuidVal"
+        if (TypesServiceConsumer.testFun(instanceVal) != instanceVal) errors += "instanceVal"
+
+        if (TypesServiceConsumer.testBooleanList(booleanListVal) != booleanListVal) errors += "booleanListVal"
+        if (TypesServiceConsumer.testIntList(intListVal) != intListVal) errors += "intListVal"
+        if (TypesServiceConsumer.testLongList(longListVal) != longListVal) errors += "longListVal"
+        if (TypesServiceConsumer.testStringList(stringListVal) != stringListVal) errors += "stringListVal"
+        TypesServiceConsumer.testByteArrayList(byteArrayListVal).forEachIndexed { index, bytes ->
+            if (!bytes.contentEquals(byteArrayListVal[index])) errors += "byteArrayListVal"
+        }
+        if (TypesServiceConsumer.testUuidList(uuidListVal) != uuidListVal) errors += "uuidListVal"
+        if (TypesServiceConsumer.testInstanceList(instanceListVal) != instanceListVal) errors += "instanceListVal"
     }
 
     return if (errors.isEmpty()) "OK" else "Fail: ${errors.joinToString(", ")}"
@@ -122,6 +121,8 @@ data class A(
         override fun decodeProto(message: ProtoMessage?): A {
             if (message == null) return A()
 
+            println(message.dumpProto())
+
             return A(
                 message.boolean(1),
                 message.int(2),
@@ -160,5 +161,27 @@ data class B(
                 .instance(1, A, value.a)
                 .string(2, value.s)
                 .pack()
+    }
+}
+
+class DumpTransport : ServiceCallTransport {
+    override suspend fun <T> call(serviceName: String, funName: String, payload: ByteArray, decoder: ProtoDecoder<T>): T {
+        println("==== REQUEST ====")
+        println(serviceName)
+        println(funName)
+        println(payload.dumpProto())
+
+        val service = requireNotNull(defaultServiceProviderRegistry[serviceName])
+
+        val responseBuilder = ProtoMessageBuilder()
+
+        service.dispatch(funName, ProtoMessage(payload), BasicServiceContext(), responseBuilder)
+
+        val responsePayload = responseBuilder.pack()
+        println("==== RESPONSE ====")
+        println(responsePayload.dumpProto())
+        println(decoder::class.qualifiedName)
+
+        return decoder.decodeProto(ProtoMessage(responseBuilder.pack()))
     }
 }

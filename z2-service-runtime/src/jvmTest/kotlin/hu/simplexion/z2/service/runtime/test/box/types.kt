@@ -1,14 +1,9 @@
 package hu.simplexion.z2.service.runtime.test.box
 
-import hu.simplexion.z2.commons.protobuf.ProtoDecoder
-import hu.simplexion.z2.commons.protobuf.ProtoEncoder
-import hu.simplexion.z2.commons.protobuf.ProtoMessage
-import hu.simplexion.z2.commons.protobuf.ProtoMessageBuilder
+import hu.simplexion.z2.commons.protobuf.*
 import hu.simplexion.z2.commons.util.UUID
-import hu.simplexion.z2.service.runtime.Service
-import hu.simplexion.z2.service.runtime.ServiceConsumer
-import hu.simplexion.z2.service.runtime.ServiceProvider
-import hu.simplexion.z2.service.runtime.defaultServiceProviderRegistry
+import hu.simplexion.z2.service.runtime.*
+import hu.simplexion.z2.service.runtime.transport.ServiceCallTransport
 import kotlinx.coroutines.runBlocking
 
 fun box(): String {
@@ -36,6 +31,7 @@ fun box(): String {
     val errors = mutableListOf<String>()
 
     runBlocking {
+        defaultServiceCallTransport = DumpTransport()
         defaultServiceProviderRegistry += TypesServiceProvider()
 
         if (TypesServiceConsumer.testFun(booleanVal) != booleanVal) errors += "booleanValue"
@@ -125,6 +121,8 @@ data class A(
         override fun decodeProto(message: ProtoMessage?): A {
             if (message == null) return A()
 
+            println(message.dumpProto())
+
             return A(
                 message.boolean(1),
                 message.int(2),
@@ -163,5 +161,26 @@ data class B(
                 .instance(1, A, value.a)
                 .string(2, value.s)
                 .pack()
+    }
+}
+
+class DumpTransport : ServiceCallTransport {
+    override suspend fun <T> call(serviceName: String, funName: String, payload: ByteArray, decoder: ProtoDecoder<T>): T {
+        println("==== REQUEST ====")
+        println(serviceName)
+        println(funName)
+        println(payload.dumpProto())
+
+        val service = requireNotNull(defaultServiceProviderRegistry[serviceName])
+
+        val responseBuilder = ProtoMessageBuilder()
+
+        service.dispatch(funName, ProtoMessage(payload), BasicServiceContext(), responseBuilder)
+
+        val responsePayload = responseBuilder.pack()
+        println("==== RESPONSE ====")
+        println(responsePayload.dumpProto())
+
+        return decoder.decodeProto(ProtoMessage(responsePayload))
     }
 }

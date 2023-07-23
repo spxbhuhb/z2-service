@@ -78,6 +78,9 @@ class ServicePluginContext(
     val protoOneByteArray = PROTO_ONE_BYTEARRAY.runtimeClass(PROTO_PACKAGE)
     val protoOneUuid = PROTO_ONE_UUID.runtimeClass(PROTO_PACKAGE)
 
+    val protoOneInstance = PROTO_ONE_INSTANCE.runtimeClass(PROTO_PACKAGE)
+    val protoOneInstanceConstructor = protoOneInstance.constructors.first()
+
     val protoOneBooleanList = PROTO_ONE_BOOLEAN_LIST.runtimeClass(PROTO_PACKAGE)
     val protoOneIntList = PROTO_ONE_INT_LIST.runtimeClass(PROTO_PACKAGE)
     val protoOneLongList = PROTO_ONE_LONG_LIST.runtimeClass(PROTO_PACKAGE)

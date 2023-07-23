@@ -4,12 +4,12 @@
 package hu.simplexion.z2.service.kotlin.ir.klass
 
 import hu.simplexion.z2.service.kotlin.ir.*
+import hu.simplexion.z2.service.kotlin.ir.util.FunctionSignature
 import org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext
 import org.jetbrains.kotlin.backend.common.ir.addDispatchReceiver
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.builders.irBlockBody
-import org.jetbrains.kotlin.ir.builders.irGetObject
 import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
@@ -18,10 +18,7 @@ import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
-import org.jetbrains.kotlin.ir.types.defaultType
-import org.jetbrains.kotlin.ir.util.SYNTHETIC_OFFSET
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
 
@@ -65,7 +62,7 @@ class ServiceConsumerClassTransform(
                     it.type = function.returnType
                     it.putTypeArgument(CALL_TYPE_INDEX, function.returnType)
                     it.putValueArgument(CALL_SERVICE_NAME_INDEX, getServiceName(function))
-                    it.putValueArgument(CALL_FUN_NAME_INDEX, irConst(function.name.identifier))
+                    it.putValueArgument(CALL_FUN_NAME_INDEX, irConst(FunctionSignature(pluginContext, function).signature()))
                     it.putValueArgument(CALL_PAYLOAD_INDEX, buildPayload(function))
                     it.putValueArgument(CALL_DECODER_INDEX, ProtoDecoderIrBuilder(pluginContext).getDecoder(function.returnType))
                 }

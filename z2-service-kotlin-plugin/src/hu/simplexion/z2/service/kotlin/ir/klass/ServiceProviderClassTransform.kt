@@ -4,6 +4,7 @@
 package hu.simplexion.z2.service.kotlin.ir.klass
 
 import hu.simplexion.z2.service.kotlin.ir.*
+import hu.simplexion.z2.service.kotlin.ir.util.FunctionSignature
 import org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext
 import org.jetbrains.kotlin.backend.common.ir.addDispatchReceiver
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
@@ -35,8 +36,13 @@ class ServiceProviderClassTransform(
 
     override val serviceFunctions = mutableListOf<IrSimpleFunctionSymbol>()
 
-    val contextFunctions = mutableListOf<IrSimpleFunction>()
+    val contextFunctions = mutableListOf<ServiceFunctionEntry>()
     val contextLessFunctions = mutableListOf<IrSimpleFunction>()
+
+    class ServiceFunctionEntry(
+        val signature : String,
+        val function : IrSimpleFunction
+    )
 
     override fun visitClassNew(declaration: IrClass): IrStatement {
         if (::transformedClass.isInitialized) return declaration
@@ -70,7 +76,10 @@ class ServiceProviderClassTransform(
 
         function.accept(ServiceContextTransform(pluginContext, function, serviceContextGetter), null)
 
-        contextFunctions += function
+        contextFunctions += ServiceFunctionEntry(
+            FunctionSignature(pluginContext, contextLess).signature(),
+            function
+        )
 
         return function
     }
@@ -173,11 +182,11 @@ class ServiceProviderClassTransform(
         }
     }
 
-    fun IrBlockBodyBuilder.dispatchBranch(dispatch: IrSimpleFunction, serviceFunction: IrSimpleFunction, funName: IrVariable): IrBranch =
+    fun IrBlockBodyBuilder.dispatchBranch(dispatch: IrSimpleFunction, serviceFunction: ServiceFunctionEntry, funName: IrVariable): IrBranch =
         irBranch(
             irEquals(
                 irGet(funName),
-                irConst(serviceFunction.name.identifier),
+                irConst(serviceFunction.signature),
                 IrStatementOrigin.EQEQ
             ),
             irImplicitCoercionToUnit(
@@ -186,10 +195,10 @@ class ServiceProviderClassTransform(
                         pluginContext,
                         irGet(dispatch.valueParameters[DISPATCH_RESPONSE_INDEX])
                     ).next(
-                        serviceFunction.returnType,
+                        serviceFunction.function.returnType,
                         1
-                    ) { callServiceFunction(dispatch, serviceFunction) }
-                ) { "unsupported type return type: ${serviceFunction.symbol}" }
+                    ) { callServiceFunction(dispatch, serviceFunction.function) }
+                ) { "unsupported type return type: ${serviceFunction.function.symbol}" }
             )
         )
 
