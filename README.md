@@ -25,18 +25,25 @@ The library has a runtime part and a Kotlin compiler plugin that transforms the 
 Compressed example:
 
 ```kotlin
+// commonMain - client and server
 interface HelloService : Service {
     suspend fun hello(myName : String) : String = service()
 }
 
+// jsMain or jvmMain - client
 object Hello : HelloService, ServiceConsumer
 
+// jvmMain - server
 class HelloServiceProvider : HelloService, ServiceProvider {
+    override suspend fun hello(myName: String): String {
+      return "Hello $myName!"
+    }
+}
 
-  override suspend fun hello(myName: String): String {
-    return "Hello $myName!"
-  }
-
+// testing
+fun main() {
+    defaultServiceProviderRegistry += HelloServiceProvider()
+    println(Hello.hello("World"))
 }
 ```
 
@@ -51,7 +58,7 @@ When using services we work with:
 
 ### Service Definitions
 
-Service definitions describe the communication between the client and the server. They are pretty straightforward, you
+Service definitions describe the communication between the client and the server. They are pretty straightforward:
 create and interface that extends `Service` and define the functions the service provides.
 
 All functions must have the `= service()` default implementation assigned.
@@ -66,23 +73,27 @@ interface HelloService : Service {
 
 ### Service Consumers
 
-When the client wants to use the service it defines a service consumer. This is also pretty easy.
-The compiler plugin generates all the code for the client side, you can simply call the functions.
-This simple definition uses the default service transport (more about that later).
+Service consumers let the clients use the service. Thease are also pretty easy: define an object
+that implements the service definition and `ServiceConsumer`.
 
+The compiler plugin generates all the code for the client side, you simply call the functions.
+
+Definition: 
 ```kotlin
 object Hello : HelloService, ServiceConsumer
+```
 
+Call example (this uses the default service transport, more about that later):
+
+```kotlin
 fun main() {
-    localLaunch {
-        document.body !!.innerText = Hello.hello("World")
-    }
+    println(Hello.hello("World"))
 }
 ```
 
 ### Service Providers
 
-On the server side you need a service provider that does whatever this service should do.
+On the server side create a service provider that does whatever this service should do:
 
 ```kotlin
 class HelloServiceProvider : HelloService, ServiceProvider {
@@ -94,9 +105,7 @@ class HelloServiceProvider : HelloService, ServiceProvider {
 }
 ```
 
-#### Service Registries
-
-Typically, you register your service providers during application startup some way, so the server knows that they are available.
+Register your service providers during application startup, so the server knows that they are available.
 
 You can use [defaultServiceProviderRegistry](/z2-service-runtime/src/commonMain/kotlin/hu/simplexion/z2/service/runtime/globals.kt)
 for this or implement your own way to store the services. These registries are used by the transports to find the service.
