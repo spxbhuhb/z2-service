@@ -4,24 +4,41 @@
 [![GitHub License](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
 ![Kotlin](https://img.shields.io/github/languages/top/spxbhuhb/z2-service)
 
-Client-server communication with the absolute minimum of boilerplate. Part of [Z2](https://github.com/spxbhuhb/z2).
-
-Status: **initial development**
-
-Example project: [Z2 Service Example](https://github.com/spxbhuhb/z2-service-example)
+Client-server communication for Kotlin Multiplatform with the absolute minimum of boilerplate. Part of [Z2](https://github.com/spxbhuhb/z2).
 
 The library has a runtime part and a Kotlin compiler plugin that transforms the code.
 
-Multiplatform Status:
+| Platform | Status                                                                                              |
+|----------|-----------------------------------------------------------------------------------------------------|
+| JVM      | **experimental**                                                                                    |
+| JS       | **experimental**                                                                                    |
+| Android  | **unverified** probably works                                                                       |
+| iOS      | **not yet** `fourRandomInt` should be implemented in commons, no idea if IR works on iOS or not.    |
+| Native   | **not yet** `fourRandomInt` should be implemented in commons, no idea if IR works on Native or not. |
 
-| Platform | Status                                                                       |
-|----------|------------------------------------------------------------------------------|
-| JVM      | Ok                                                                           |
-| JS       | Ok                                                                           |
-| Android  | It would probably work, haven't tried.                                       |
-| iOS      | UUID should be implemented in commons, no idea if IR works on iOS or not.    |
-| Native   | UUID should be implemented in commons, no idea if IR works on Native or not. |
+## Getting started
 
+* [Overview](#overview)
+* [Gradle Setup](#gradle-setup)
+* [Example Project](https://github.com/spxbhuhb/z2-service-example)
+
+Compressed example:
+
+```kotlin
+interface HelloService : Service {
+    suspend fun hello(myName : String) : String = service()
+}
+
+object Hello : HelloService, ServiceConsumer
+
+class HelloServiceProvider : HelloService, ServiceProvider {
+
+  override suspend fun hello(myName: String): String {
+    return "Hello $myName!"
+  }
+
+}
+```
 
 ## Overview
 
@@ -193,7 +210,7 @@ Services support these data types as function parameters and return values:
 
 ### Composite Types
 
-[Z2 Schematic](https://github.com/spxbhuhb/z2-schematic) classes can be used with services out-of-the-box.
+[Z2 Schematic](https://github.com/spxbhuhb/z2-schematic) classes will work out-of-the-box. **not implemented yet**
 
 Any other classes that support Protocol Buffer decoding/encoding:
 
@@ -202,25 +219,14 @@ Any other classes that support Protocol Buffer decoding/encoding:
 ### Collections
 
 * `List` of any simple or composite type
-* `MutableList` of any simple or composite type
 
 ## Gradle Setup
-
-Gradle plugin repository (settings.gradle.kts, temporary until Gradle registers the plugin):
-
-```kotlin
-pluginManagement {
-    repositories {
-        mavenCentral()
-    }
-}
-```
 
 Gradle plugin dependency (build.gradle.kts):
 
 ```kotlin
 plugin {
-    id("hu.simplexion.z2.service") version "--not released yet--"
+    id("hu.simplexion.z2.service") version "2023.7.24"
 }
 ```
 
@@ -229,7 +235,7 @@ Runtime dependency (build.gradle.kts):
 ```kotlin
 val commonMain by getting {
     dependencies {
-        implementation("hu.simplexion.z2:z2-service-runtime:--not released yet--")
+        implementation("hu.simplexion.z2:z2-service-runtime:2023.7.24")
     }
 }
 ```

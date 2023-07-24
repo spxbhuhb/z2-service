@@ -11,13 +11,29 @@ import hu.simplexion.z2.service.runtime.ServiceProvider
 import kotlinx.coroutines.runBlocking
 import hu.simplexion.z2.service.runtime.defaultServiceProviderRegistry
 
-interface TestService : Service {
+interface ClickService : Service {
 
-    suspend fun testFun(arg : ByteArray) : Int = service()
+    suspend fun click() : Int = service()
 
 }
 
-object TestServiceConsumer : TestService, ServiceConsumer
+class AtomicInteger() {
+    var value = 0
+    fun incrementAndGet() : Int {
+        value++
+        return value
+    }
+}
+
+class ClickServiceProvider : ClickService, ServiceProvider {
+
+    var clicked = AtomicInteger()
+
+    override suspend fun click(): Int {
+        return clicked.incrementAndGet()
+    }
+
+}
 
 fun box(): String {
     return "OK"

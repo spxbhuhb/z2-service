@@ -49,7 +49,7 @@ open class AbstractAdhocTest : BaseTestRunner(), RunnerWithTargetBackendForTestG
             + DUMP_IR
         }
 
-        commonFirWithPluginFrontendConfiguration()
+        commonFirWithPluginFrontendConfiguration(dumpFir = false)
         fir2IrStep()
         irHandlersStep {
             useHandlers(

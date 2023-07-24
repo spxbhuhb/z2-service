@@ -17,7 +17,6 @@ repositories {
 }
 
 group = "hu.simplexion.z2"
-version = "2023.7.21-SNAPSHOT"
 
 val scmPath = "spxbhuhb/z2-service"
 val pomName = "Z2 Service Gradle Plugin"

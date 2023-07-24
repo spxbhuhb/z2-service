@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
+import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 
 interface ServiceBuilder : IrBuilder {
@@ -17,9 +18,12 @@ interface ServiceBuilder : IrBuilder {
 
     val serviceFunctions: MutableList<IrSimpleFunctionSymbol>
 
+    val serviceNames : MutableList<String>
+
     fun collectServiceFunctions() {
         for (superType in transformedClass.superTypes) {
             if (superType.isSubtypeOfClass(pluginContext.serviceClass)) {
+                serviceNames += superType.classFqName!!.asString()
                 serviceFunctions += pluginContext.serviceFunctionCache[superType]
             }
         }

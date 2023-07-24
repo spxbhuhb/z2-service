@@ -36,7 +36,10 @@ class ServiceProviderClassTransform(
 
     override val serviceFunctions = mutableListOf<IrSimpleFunctionSymbol>()
 
+    override val serviceNames = mutableListOf<String>()
+
     val contextFunctions = mutableListOf<ServiceFunctionEntry>()
+
     val contextLessFunctions = mutableListOf<IrSimpleFunction>()
 
     class ServiceFunctionEntry(
@@ -60,6 +63,11 @@ class ServiceProviderClassTransform(
         generateDispatch()
 
         return declaration
+    }
+
+    override fun visitPropertyNew(declaration: IrProperty): IrStatement {
+        if (declaration.name.identifier != SERVICE_NAME_PROPERTY) return declaration
+        return declaration.accept(ServiceNamePropertyTransform(pluginContext, this), null) as IrStatement
     }
 
     override fun visitFunctionNew(declaration: IrFunction): IrStatement {

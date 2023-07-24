@@ -45,16 +45,16 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                api("io.ktor:ktor-client-websockets:$ktor_version")
+                implementation("io.ktor:ktor-client-websockets:$ktor_version")
                 implementation("hu.simplexion.z2:z2-service-runtime:${z2_service_version}")
             }
         }
         sourceSets["jvmMain"].dependencies {
             dependencies {
-                api("io.ktor:ktor-server-core-jvm:$ktor_version")
-                api("io.ktor:ktor-server-netty-jvm:$ktor_version")
-                api("io.ktor:ktor-server-websockets:$ktor_version")
-                api("ch.qos.logback:logback-classic:$logback_version")
+                implementation("io.ktor:ktor-server-core-jvm:$ktor_version")
+                implementation("io.ktor:ktor-server-netty-jvm:$ktor_version")
+                implementation("io.ktor:ktor-server-websockets:$ktor_version")
+                implementation("ch.qos.logback:logback-classic:$logback_version")
             }
         }
         val jsMain by getting

@@ -11,10 +11,7 @@ import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irReturn
-import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
-import org.jetbrains.kotlin.ir.declarations.IrFunction
-import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
+import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
@@ -33,6 +30,8 @@ class ServiceConsumerClassTransform(
 
     override val serviceFunctions = mutableListOf<IrSimpleFunctionSymbol>()
 
+    override val serviceNames = mutableListOf<String>()
+
     override fun visitClassNew(declaration: IrClass): IrStatement {
         if (::transformedClass.isInitialized) return declaration
 
@@ -41,6 +40,11 @@ class ServiceConsumerClassTransform(
         collectServiceFunctions()
 
         return super.visitClassNew(declaration)
+    }
+
+    override fun visitPropertyNew(declaration: IrProperty): IrStatement {
+        if (declaration.name.identifier != SERVICE_NAME_PROPERTY) return declaration
+        return declaration.accept(ServiceNamePropertyTransform(pluginContext, this), null) as IrStatement
     }
 
     override fun visitFunctionNew(declaration: IrFunction): IrStatement {

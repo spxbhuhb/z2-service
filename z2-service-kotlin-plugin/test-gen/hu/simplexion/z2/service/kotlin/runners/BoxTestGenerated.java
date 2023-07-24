@@ -28,6 +28,12 @@ public class BoxTestGenerated extends AbstractBoxTest {
     }
 
     @Test
+    @TestMetadata("serviceName.kt")
+    public void testServiceName() throws Exception {
+        runTest("testData/box/serviceName.kt");
+    }
+
+    @Test
     @TestMetadata("types.kt")
     public void testTypes() throws Exception {
         runTest("testData/box/types.kt");
