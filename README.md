@@ -40,10 +40,12 @@ class HelloServiceProvider : HelloService, ServiceProvider {
     }
 }
 
-// testing
+// testing - this one for jvmMain
 fun main() {
     defaultServiceProviderRegistry += HelloServiceProvider()
-    println(Hello.hello("World"))
+    runBlocking {
+        println(Hello.hello("World"))
+    }
 }
 ```
 
@@ -59,7 +61,7 @@ When using services we work with:
 ### Service Definitions
 
 Service definitions describe the communication between the client and the server. They are pretty straightforward:
-create and interface that extends `Service` and define the functions the service provides.
+create an interface that extends `Service` and define the functions the service provides.
 
 All functions must have the `= service()` default implementation assigned.
 
@@ -73,8 +75,8 @@ interface HelloService : Service {
 
 ### Service Consumers
 
-Service consumers let the clients use the service. Thease are also pretty easy: define an object
-that implements the service definition and `ServiceConsumer`.
+Service consumers let the clients use the service. Define an object  that implements the service definition 
+and `ServiceConsumer`.
 
 The compiler plugin generates all the code for the client side, you simply call the functions.
 
@@ -87,7 +89,9 @@ Call example (this uses the default service transport, more about that later):
 
 ```kotlin
 fun main() {
-    println(Hello.hello("World"))
+    runBlocking {
+        println(Hello.hello("World"))
+    }
 }
 ```
 
@@ -105,10 +109,10 @@ class HelloServiceProvider : HelloService, ServiceProvider {
 }
 ```
 
-Register your service providers during application startup, so the server knows that they are available.
+Register the service providers during application startup, so the server knows that they are available.
 
-You can use [defaultServiceProviderRegistry](/z2-service-runtime/src/commonMain/kotlin/hu/simplexion/z2/service/runtime/globals.kt)
-for this or implement your own way to store the services. These registries are used by the transports to find the service.
+Use [defaultServiceProviderRegistry](/z2-service-runtime/src/commonMain/kotlin/hu/simplexion/z2/service/runtime/globals.kt)
+for or implement your own way to store the services. These registries are used by the transports to find the service.
 
 ```kotlin
 defaultServiceProviderRegistry += HelloServiceProvider()
@@ -116,10 +120,10 @@ defaultServiceProviderRegistry += HelloServiceProvider()
 
 #### Service Context
 
-Most cases you need authorization on the server side. Services provide you a so-called `serviceContext`.
+Most cases you need authorization on the server side. Services provide a `serviceContext`.
 This context may contain the identity of the user, along with other information.
 
-You can use `serviceContext` only inside the service functions. All other uses throw an exception.
+You can use `serviceContext` only directly inside the service functions. All other uses throw an exception.
 
 ```kotlin
 class HelloServiceProvider : HelloService, ServiceProvider {
@@ -148,7 +152,7 @@ class HelloServiceProvider : HelloService, ServiceProvider {
 Transports move the call arguments and the return values between the client and the server. The library uses Protocol Buffers as 
 transport format, but it does not really care about how the packets reach the other side.
 
-There are a few basic transport implementations for Ktor in the `z2-service-ktor` module. This module has to be added to the project
+There is a very basic transport implementation for Ktor in the `z2-service-ktor` module. This module has to be added to the project
 as a dependency to use them:
 
 ```kotlin
@@ -158,10 +162,10 @@ implementation("hu.simplexion.z2:z2-service-ktor:${z2_service_version}")
 #### Client Side
 
 The [defaultServiceCallTransport](z2-service-runtime/src/commonMain/kotlin/hu/simplexion/z2/service/runtime/globals.kt)
-global variable contains the transport. You can set this during application startup as the example shows below.
+global variable contains the transport. Set this during application startup as the example shows below.
 
 [BasicWebSocketServiceTransport](z2-service-ktor/src/commonMain/kotlin/hu/simplexion/z2/service/ktor/client/BasicWebSocketServiceTransport.kt)
-from the `z2-service-ktor` module provides a basic web socket transport implementation for clients.
+from `z2-service-ktor` provides a basic web socket transport implementation for clients.
 
 ```kotlin
 defaultServiceCallTransport = BasicWebSocketServiceTransport(
@@ -175,12 +179,12 @@ defaultServiceCallTransport = BasicWebSocketServiceTransport(
 
 #### Server Side
 
-With Ktor you can use [Routing.basicWebSocketServiceDispatcher](z2-service-ktor/src/jvmMain/kotlin/hu/simplexion/z2/service/ktor/server/basic.kt)
-from the `z2-service-ktor` to install a service provider`.
+[Routing.basicWebSocketServiceDispatcher](z2-service-ktor/src/jvmMain/kotlin/hu/simplexion/z2/service/ktor/server/basic.kt)
+from `z2-service-ktor` provides a basic web socket dispatcher implementation for Ktor.
 
-With other servers you can write your own service provider based on `basicWebSocketServiceDispatcher`, it's pretty easy.
+With other servers you can write your own service provider based on `basicWebSocketServiceDispatcher`.
 
-You also have to add your providers to the list of know service providers. Here is a full example:
+Full example of basic server setup:
 
 ```kotlin
 fun main() {
@@ -249,6 +253,12 @@ val commonMain by getting {
 }
 ```
 
+For Ktor transport and dispatcher: 
+
+```kotlin
+implementation("hu.simplexion.z2:z2-service-ktor:2023.7.24")
+```
+
 ## A Kind of Magic
 
 So, how does this work? Actually, it is pretty simple.
@@ -258,7 +268,7 @@ examples between the [tests](z2-service-runtime/src/jvmTest/kotlin/hu/simplexion
 
 ### Client Side Transform
 
-When a class implements the `ServiceConsumer` interface, the plugin creates overrides for the service functions
+When a class implements the `ServiceConsumer` interface, the plugin overrides the service functions
 like this:
 
 ```kotlin
@@ -273,7 +283,7 @@ object TestServiceConsumer : TestService, ServiceConsumer {
         defaultServiceCallTransport
             .call(
                 serviceName,
-                "testFun",
+                "testFun;IS", // signature of the function, so same name may be used with different parameters
                 ProtoMessageBuilder() // this is the payload to send to the service
                     .int(1, arg1)
                     .string(2, arg2)
@@ -294,8 +304,10 @@ When a class implements the `ServiceProvider` interface, the plugin:
   * removes the `override` modifier
   * adds a `serviceContext` argument
   * replaces all `ServiceProvider.serviceContext` property accesses to access the parameter added above 
-  * creates a new function with the same name and arguments but without the `serviceContext` parameter
-  * adds the `override` modifier to this new function
+  * creates a new function
+    * with the same name and arguments
+    * without the `serviceContext` parameter
+    * adds the `override` modifier to this new function
 * adds a `dispatch` function that handles dispatch of the incoming calls
 
 ```kotlin
@@ -414,7 +426,7 @@ To run box tests you have to run the `z2-service-runtime:shadowJar` Gradle task.
 
 ## License
 
-> Copyright (c) 2020-2023 Simplexion Kft, Hungary and contributors
+> Copyright (c) 2023 Simplexion Kft, Hungary and contributors
 >
 > Licensed under the Apache License, Version 2.0 (the "License");
 > you may not use this work except in compliance with the License.
