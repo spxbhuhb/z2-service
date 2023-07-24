@@ -50,6 +50,7 @@ kotlin {
     }
 }
 
+// this is here for the compiler plugin box tests
 tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
 }
 
