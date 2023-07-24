@@ -1,6 +1,6 @@
 # Z2 Service
 
-[![Maven Central](https://img.shields.io/maven-central/v/hu.simplexion.z2/z2-service)](https://mvnrepository.com/artifact/hu.simplexion.z2/z2-service)
+[![Maven Central](https://img.shields.io/maven-central/v/hu.simplexion.z2/z2-service-runtime)](https://mvnrepository.com/artifact/hu.simplexion.z2/z2-service-runtime)
 [![GitHub License](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
 ![Kotlin](https://img.shields.io/github/languages/top/spxbhuhb/z2-service)
 
