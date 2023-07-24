@@ -125,6 +125,8 @@ This context may contain the identity of the user, along with other information.
 
 You can use `serviceContext` only directly inside the service functions. All other uses throw an exception.
 
+**NOTE** the basic Ktor web socket dispatcher does not handle the context yet, you'll get an empty one each call
+
 ```kotlin
 class HelloServiceProvider : HelloService, ServiceProvider {
 

@@ -2,8 +2,6 @@
  * Copyright © 2020-2023, Simplexion, Hungary and contributors. Use of this source code is governed by the Apache 2.0 license.
  */
 
-import java.net.URI
-
 plugins {
     kotlin("multiplatform") version "1.9.0"
     signing
@@ -21,12 +19,12 @@ val ktor_version: String by project
 val logback_version: String by project
 
 repositories {
-    mavenLocal()
+//    mavenLocal()
     google()
     mavenCentral()
-    maven {
-        url = URI("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-    }
+//    maven {
+//       url = URI("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+//    }
 }
 
 kotlin {

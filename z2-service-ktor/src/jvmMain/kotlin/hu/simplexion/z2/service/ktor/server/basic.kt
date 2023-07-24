@@ -15,6 +15,8 @@ fun Routing.basicWebsocketServiceCallTransport(path: String = "/z2/service") {
 
     webSocket(path) {
         try {
+            val context = BasicServiceContext()
+
             for (frame in incoming) {
                 frame as? Frame.Binary ?: continue
 
@@ -31,7 +33,7 @@ fun Routing.basicWebsocketServiceCallTransport(path: String = "/z2/service") {
                     service.dispatch(
                         requestEnvelope.funName,
                         ProtoMessage(requestEnvelope.payload),
-                        BasicServiceContext(),
+                        context,
                         responseBuilder
                     )
 
