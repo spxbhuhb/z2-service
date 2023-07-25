@@ -55,6 +55,7 @@ const val SIGNATURE_UUID_LIST = "*U"
 
 const val PROTO_PACKAGE = "hu.simplexion.z2.commons.protobuf"
 
+const val PROTO_ONE_UNIT = "ProtoOneUnit"
 const val PROTO_ONE_BOOLEAN = "ProtoOneBoolean"
 const val PROTO_ONE_INT = "ProtoOneInt"
 const val PROTO_ONE_LONG = "ProtoOneLong"

@@ -71,6 +71,7 @@ class ServicePluginContext(
 
     val uuidType = UUID.runtimeClass(UTIL_PACKAGE)
 
+    val protoOneUnit = PROTO_ONE_UNIT.runtimeClass(PROTO_PACKAGE)
     val protoOneBoolean = PROTO_ONE_BOOLEAN.runtimeClass(PROTO_PACKAGE)
     val protoOneInt = PROTO_ONE_INT.runtimeClass(PROTO_PACKAGE)
     val protoOneLong = PROTO_ONE_LONG.runtimeClass(PROTO_PACKAGE)

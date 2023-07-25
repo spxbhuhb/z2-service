@@ -23,6 +23,7 @@ class ProtoDecoderIrBuilder(
 
     fun primitive(type: IrType): IrExpression? =
         when (type) {
+            irBuiltIns.unitType -> irGetObject(pluginContext.protoOneUnit)
             irBuiltIns.booleanType -> irGetObject(pluginContext.protoOneBoolean)
             irBuiltIns.intType -> irGetObject(pluginContext.protoOneInt)
             irBuiltIns.longType -> irGetObject(pluginContext.protoOneLong)

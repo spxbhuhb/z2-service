@@ -42,7 +42,7 @@ fun box(): String {
         if (TypesServiceConsumer.testFun(uuidVal) != uuidVal) errors += "uuidVal"
         if (TypesServiceConsumer.testFun(instanceVal) != instanceVal) errors += "instanceVal"
 
-        if (TypesServiceConsumer.testBooleanList(booleanListVal) == booleanListVal) errors += "booleanListVal"
+        if (TypesServiceConsumer.testBooleanList(booleanListVal) != booleanListVal) errors += "booleanListVal"
         if (TypesServiceConsumer.testIntList(intListVal) != intListVal) errors += "intListVal"
         if (TypesServiceConsumer.testLongList(longListVal) != longListVal) errors += "longListVal"
         if (TypesServiceConsumer.testStringList(stringListVal) != stringListVal) errors += "stringListVal"
@@ -57,6 +57,8 @@ fun box(): String {
 }
 
 interface TypesService : Service {
+
+    suspend fun testFun() : Unit = service()
 
     suspend fun testFun(arg1: Boolean): Boolean = service()
     suspend fun testFun(arg1: Int): Int = service()
@@ -79,6 +81,8 @@ interface TypesService : Service {
 object TypesServiceConsumer : TypesService, ServiceConsumer
 
 class TypesServiceProvider : TypesService, ServiceProvider {
+
+    override suspend fun testFun() = Unit
 
     override suspend fun testFun(arg1: Boolean) = arg1
 
@@ -180,7 +184,8 @@ class DumpTransport : ServiceCallTransport {
         val responsePayload = responseBuilder.pack()
         println("==== RESPONSE ====")
         println(responsePayload.dumpProto())
+        println(decoder::class.qualifiedName)
 
-        return decoder.decodeProto(ProtoMessage(responsePayload))
+        return decoder.decodeProto(ProtoMessage(responseBuilder.pack()))
     }
 }

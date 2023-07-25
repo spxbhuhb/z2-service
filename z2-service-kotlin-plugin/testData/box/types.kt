@@ -58,6 +58,8 @@ fun box(): String {
 
 interface TypesService : Service {
 
+    suspend fun testFun() : Unit = service()
+
     suspend fun testFun(arg1: Boolean): Boolean = service()
     suspend fun testFun(arg1: Int): Int = service()
     suspend fun testFun(arg1: Long): Long = service()
@@ -79,6 +81,8 @@ interface TypesService : Service {
 object TypesServiceConsumer : TypesService, ServiceConsumer
 
 class TypesServiceProvider : TypesService, ServiceProvider {
+
+    override suspend fun testFun() = Unit
 
     override suspend fun testFun(arg1: Boolean) = arg1
 

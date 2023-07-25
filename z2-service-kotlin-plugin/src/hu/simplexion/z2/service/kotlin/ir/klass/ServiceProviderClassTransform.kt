@@ -197,17 +197,21 @@ class ServiceProviderClassTransform(
                 irConst(serviceFunction.signature),
                 IrStatementOrigin.EQEQ
             ),
-            irImplicitCoercionToUnit(
-                requireNotNull(
-                    ProtoMessageBuilderIrBuilder(
-                        pluginContext,
-                        irGet(dispatch.valueParameters[DISPATCH_RESPONSE_INDEX])
-                    ).next(
-                        serviceFunction.function.returnType,
-                        1
-                    ) { callServiceFunction(dispatch, serviceFunction.function) }
-                ) { "unsupported type return type: ${serviceFunction.function.symbol}" }
-            )
+            if ( serviceFunction.function.returnType == irBuiltIns.unitType) {
+                callServiceFunction(dispatch, serviceFunction.function)
+            } else {
+                irImplicitCoercionToUnit(
+                    requireNotNull(
+                        ProtoMessageBuilderIrBuilder(
+                            pluginContext,
+                            irGet(dispatch.valueParameters[DISPATCH_RESPONSE_INDEX])
+                        ).next(
+                            serviceFunction.function.returnType,
+                            1
+                        ) { callServiceFunction(dispatch, serviceFunction.function) }
+                    ) { "unsupported type return type: ${serviceFunction.function.symbol}" }
+                )
+            }
         )
 
     fun IrBlockBodyBuilder.callServiceFunction(dispatch: IrSimpleFunction, serviceFunction: IrSimpleFunction): IrExpression =
