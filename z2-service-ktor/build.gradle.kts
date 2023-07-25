@@ -19,12 +19,9 @@ val ktor_version: String by project
 val logback_version: String by project
 
 repositories {
-//    mavenLocal()
+    mavenLocal()
     google()
     mavenCentral()
-//    maven {
-//       url = URI("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-//    }
 }
 
 kotlin {
