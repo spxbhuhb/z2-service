@@ -16,7 +16,10 @@ import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
+import org.jetbrains.kotlin.ir.types.getClass
+import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.defaultType
+import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
 
 
@@ -88,7 +91,11 @@ class ServiceConsumerClassTransform(
 
         for (valueParameter in function.valueParameters) {
             protoBuilder.next(valueParameter)
-            check(protoBuilder.valid) { "unsupported type: ${valueParameter.symbol} function: ${function.symbol}" }
+            check(protoBuilder.valid) {
+                "unsupported type: ${valueParameter.symbol} function: ${function.symbol}\n" +
+                    valueParameter.type.getClass()?.companionObject()?.dump() + "\n" +
+                    valueParameter.type.getClass()?.dump()
+            }
         }
 
         return irCall(
