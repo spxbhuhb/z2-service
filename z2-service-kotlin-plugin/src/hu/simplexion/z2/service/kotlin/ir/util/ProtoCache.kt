@@ -1,5 +1,6 @@
 package hu.simplexion.z2.service.kotlin.ir.util
 
+import hu.simplexion.z2.service.kotlin.ir.COMPANION_OBJECT_NAME
 import hu.simplexion.z2.service.kotlin.ir.ServicePluginContext
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.types.IrType
@@ -8,7 +9,6 @@ import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.isSubclassOf
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
 class ProtoCache(
@@ -32,9 +32,8 @@ class ProtoCache(
 
     private fun tryLoadCompanion(type: IrType): IrClass? {
         val typeFqName = type.classFqName ?: return null
-        val pkgName = typeFqName.parent().asString()
-        val companionName = typeFqName.shortName().asString() + "\$Companion"
-        return pluginContext.irContext.referenceClass(ClassId(FqName(pkgName), Name.identifier(companionName)))?.owner
+        val classId = ClassId(typeFqName.parent(), typeFqName.shortName()).createNestedClassId(Name.identifier(COMPANION_OBJECT_NAME))
+        return pluginContext.irContext.referenceClass(classId)?.owner
     }
 
 }

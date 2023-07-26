@@ -41,6 +41,7 @@ class ServiceNamePropertyTransform(
     override fun visitPropertyNew(declaration: IrProperty): IrStatement {
         if (!declaration.isFakeOverride) return declaration
 
+        require(serviceBuilder.serviceNames.isNotEmpty()) { "missing service interface (probably ': Service' is missing)" }
         require(serviceBuilder.serviceNames.size == 1) { "you have to set `serviceName` manually when more than one service is implemented"}
 
         property = declaration

@@ -41,21 +41,25 @@ open class AbstractAdhocTest : BaseTestRunner(), RunnerWithTargetBackendForTestG
             dependencyKind = DependencyKind.Binary
         }
 
+        val dumps = false
+
         useCustomRuntimeClasspathProviders(AbstractAdhocTest::ServiceRuntimeClassPathProvider)
 
         configureFirParser(FirParser.Psi)
 
         defaultDirectives {
-            + DUMP_IR
+            if (dumps) + DUMP_IR
         }
 
-        commonFirWithPluginFrontendConfiguration(dumpFir = false)
+        commonFirWithPluginFrontendConfiguration(dumpFir = dumps)
         fir2IrStep()
         irHandlersStep {
-            useHandlers(
-                ::IrTextDumpHandler,
-                ::IrTreeVerifierHandler,
-            )
+            if (dumps) {
+                useHandlers(
+                    ::IrTextDumpHandler,
+                    ::IrTreeVerifierHandler,
+                )
+            }
         }
         facadeStep(::JvmIrBackendFacade)
 

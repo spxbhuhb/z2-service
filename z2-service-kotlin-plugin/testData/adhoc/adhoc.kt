@@ -1,40 +1,58 @@
 package foo.bar
 
-import hu.simplexion.z2.commons.protobuf.ProtoMessageBuilder
-import hu.simplexion.z2.commons.protobuf.ProtoOneString
-import hu.simplexion.z2.service.runtime.Service
-import hu.simplexion.z2.service.runtime.ServiceConsumer
-import hu.simplexion.z2.service.runtime.defaultServiceCallTransport
-import hu.simplexion.z2.commons.protobuf.ProtoMessage
-import hu.simplexion.z2.service.runtime.ServiceContext
-import hu.simplexion.z2.service.runtime.ServiceProvider
+import hu.simplexion.z2.commons.protobuf.*
+import hu.simplexion.z2.commons.util.UUID
+import hu.simplexion.z2.service.runtime.*
+import hu.simplexion.z2.service.runtime.transport.ServiceCallTransport
 import kotlinx.coroutines.runBlocking
-import hu.simplexion.z2.service.runtime.defaultServiceProviderRegistry
 
-interface ClickService : Service {
+interface BasicService : Service {
+    suspend fun list(): List<BasicServiceContext> = service()
 
-    suspend fun click() : Int = service()
-
+    suspend fun add(bsc : BasicServiceContext) : BasicServiceContext = service()
 }
 
-class AtomicInteger() {
-    var value = 0
-    fun incrementAndGet() : Int {
-        value++
-        return value
-    }
-}
+object BasicServiceConsumer : BasicService, ServiceConsumer
 
-class ClickServiceProvider : ClickService, ServiceProvider {
+class BasicServiceProvider : BasicService, ServiceProvider {
 
-    var clicked = AtomicInteger()
+    override suspend fun list() = listOf(BasicServiceContext())
 
-    override suspend fun click(): Int {
-        return clicked.incrementAndGet()
+    override suspend fun add(bsc: BasicServiceContext): BasicServiceContext {
+        return BasicServiceContext()
     }
 
 }
 
 fun box(): String {
+    runBlocking {
+        defaultServiceCallTransport = DumpTransport()
+        defaultServiceProviderRegistry += BasicServiceProvider()
+        BasicServiceConsumer.list()
+        BasicServiceConsumer.add(BasicServiceContext())
+    }
     return "OK"
+}
+
+
+class DumpTransport : ServiceCallTransport {
+    override suspend fun <T> call(serviceName: String, funName: String, payload: ByteArray, decoder: ProtoDecoder<T>): T {
+        println("==== REQUEST ====")
+        println(serviceName)
+        println(funName)
+        println(payload.dumpProto())
+
+        val service = requireNotNull(defaultServiceProviderRegistry[serviceName])
+
+        val responseBuilder = ProtoMessageBuilder()
+
+        service.dispatch(funName, ProtoMessage(payload), BasicServiceContext(), responseBuilder)
+
+        val responsePayload = responseBuilder.pack()
+        println("==== RESPONSE ====")
+        println(responsePayload.dumpProto())
+        println(decoder::class.qualifiedName)
+
+        return decoder.decodeProto(ProtoMessage(responseBuilder.pack()))
+    }
 }

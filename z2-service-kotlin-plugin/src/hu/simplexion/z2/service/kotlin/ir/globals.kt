@@ -123,6 +123,8 @@ const val MESSAGE_CALL_DECODER_INDEX = 1 // index of the encoder in ProtoMessage
 const val UTIL_PACKAGE = "hu.simplexion.z2.commons.util"
 const val UUID = "UUID"
 
+const val COMPANION_OBJECT_NAME = "Companion"
+
 const val KOTLIN = "kotlin"
 const val KOTLIN_COLLECTIONS = "kotlin.collections"
 const val LIST = "List"
