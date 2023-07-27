@@ -15,10 +15,10 @@ class ProtoCache(
     val pluginContext: ServicePluginContext
 ) {
 
-    val services = mutableMapOf<IrType, IrClass?>()
+    val protoCoders = mutableMapOf<IrType, IrClass?>()
 
     operator fun get(type: IrType) =
-        services.getOrPut(type) { add(type) }
+        protoCoders.getOrPut(type) { add(type) }
 
     fun add(type: IrType): IrClass? {
 
@@ -27,7 +27,13 @@ class ProtoCache(
         if (!companion.isSubclassOf(pluginContext.protoEncoderClass)) return null
         if (!companion.isSubclassOf(pluginContext.protoDecoderClass)) return null
 
+        pluginContext.debug("service") { "protoCache add $type $companion"}
         return companion
+    }
+
+    fun add(type : IrType, companion : IrClass) {
+        pluginContext.debug("service") { "protoCache add $type $companion"}
+        protoCoders[type] = companion
     }
 
     private fun tryLoadCompanion(type: IrType): IrClass? {

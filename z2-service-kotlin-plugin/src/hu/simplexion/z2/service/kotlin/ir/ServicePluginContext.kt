@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
 class ServicePluginContext(
-    val irContext: IrPluginContext,
+    val irContext: IrPluginContext
 ) {
 
     val serviceClass = SERVICE_CLASS.runtimeClass()
@@ -108,4 +108,9 @@ class ServicePluginContext(
             "Missing ${pkg}.$this class. Maybe the gradle dependency on \"hu.simplexion.z2:z2-service-runtime\" is missing."
         }
 
+    @Suppress("UNUSED_PARAMETER")
+    fun debug(label : String, message : () -> Any?) {
+//        val paddedLabel = "[$label]".padEnd(20)
+//        Files.write(Paths.get("/Users/tiz/Desktop/plugin.txt"), "$paddedLabel  ${message()}\n".encodeToByteArray(), StandardOpenOption.APPEND, StandardOpenOption.CREATE)
+    }
 }
