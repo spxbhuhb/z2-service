@@ -5,6 +5,12 @@ import hu.simplexion.z2.commons.util.UUID
 import hu.simplexion.z2.service.runtime.*
 import hu.simplexion.z2.service.runtime.transport.ServiceCallTransport
 import kotlinx.coroutines.runBlocking
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 fun box(): String {
     val booleanVal = true
@@ -13,7 +19,13 @@ fun box(): String {
     val stringVal = "abc"
     val byteArrayVal = byteArrayOf(9, 8, 7)
     val uuidVal = UUID<TypesService>()
+
     val instanceVal = A(true, 12, "hello")
+
+    val durationVal = 10.seconds
+    val instantVal = Clock.System.now()
+    val localDateVal = LocalDate(2023,7,27)
+    val localDateTimeVal = LocalDateTime(2023,7,27,15,35,5,11)
 
     val booleanListVal = listOf(true, false, true)
     val intListVal = listOf(1, 2, 3)
@@ -28,6 +40,11 @@ fun box(): String {
         B(A(true, 789, "c", mutableListOf(7, 8, 9)), "cc")
     )
 
+    val durationListVal = listOf(durationVal)
+    val instantListVal = listOf(instantVal)
+    val localDateListVal = listOf(localDateVal)
+    val localDateTimeListVal = listOf(localDateTimeVal)
+
     val errors = mutableListOf<String>()
 
     runBlocking {
@@ -40,7 +57,13 @@ fun box(): String {
         if (TypesServiceConsumer.testFun(stringVal) != stringVal) errors += "stringVal"
         if (!TypesServiceConsumer.testFun(byteArrayVal).contentEquals(byteArrayVal)) errors += "byteArrayVal"
         if (TypesServiceConsumer.testFun(uuidVal) != uuidVal) errors += "uuidVal"
+
         if (TypesServiceConsumer.testFun(instanceVal) != instanceVal) errors += "instanceVal"
+
+        if (TypesServiceConsumer.testFun(durationVal) != durationVal) errors += "durationVal"
+        if (TypesServiceConsumer.testFun(instantVal) != instantVal) errors += "instantVal"
+        if (TypesServiceConsumer.testFun(localDateVal) != localDateVal) errors += "localDateVal"
+        if (TypesServiceConsumer.testFun(localDateTimeVal) != localDateTimeVal) errors += "localDateTimeVal"
 
         if (TypesServiceConsumer.testBooleanList(booleanListVal) != booleanListVal) errors += "booleanListVal"
         if (TypesServiceConsumer.testIntList(intListVal) != intListVal) errors += "intListVal"
@@ -50,7 +73,14 @@ fun box(): String {
             if (!bytes.contentEquals(byteArrayListVal[index])) errors += "byteArrayListVal"
         }
         if (TypesServiceConsumer.testUuidList(uuidListVal) != uuidListVal) errors += "uuidListVal"
+
         if (TypesServiceConsumer.testInstanceList(instanceListVal) != instanceListVal) errors += "instanceListVal"
+
+        if (TypesServiceConsumer.testDurationList(durationListVal) != durationListVal) errors += "durationListVal"
+        if (TypesServiceConsumer.testInstantList(instantListVal) != instantListVal) errors += "instantListVal"
+        if (TypesServiceConsumer.testLocalDateList(localDateListVal) != localDateListVal) errors += "localDateListVal"
+        if (TypesServiceConsumer.testLocalDateTimeList(localDateTimeListVal) != localDateTimeListVal) errors += "localDateTimeListVal"
+
     }
 
     return if (errors.isEmpty()) "OK" else "Fail: ${errors.joinToString(", ")}"
@@ -68,6 +98,11 @@ interface TypesService : Service {
     suspend fun testFun(arg1: UUID<TypesService>): UUID<TypesService> = service()
     suspend fun testFun(arg1: A): A = service()
 
+    suspend fun testFun(arg1 : Duration) : Duration = service()
+    suspend fun testFun(arg1 : Instant) : Instant = service()
+    suspend fun testFun(arg1 : LocalDate) : LocalDate = service()
+    suspend fun testFun(arg1 : LocalDateTime) : LocalDateTime = service()
+
     suspend fun testBooleanList(arg1: List<Boolean>): List<Boolean> = service()
     suspend fun testIntList(arg1: List<Int>): List<Int> = service()
     suspend fun testLongList(arg1: List<Long>): List<Long> = service()
@@ -75,6 +110,11 @@ interface TypesService : Service {
     suspend fun testByteArrayList(arg1: List<ByteArray>): List<ByteArray> = service()
     suspend fun testUuidList(arg1: List<UUID<TypesService>>): List<UUID<TypesService>> = service()
     suspend fun testInstanceList(arg1: List<B>): List<B> = service()
+
+    suspend fun testDurationList(arg1 : List<Duration>) : List<Duration> = service()
+    suspend fun testInstantList(arg1 : List<Instant>) : List<Instant> = service()
+    suspend fun testLocalDateList(arg1 : List<LocalDate>) : List<LocalDate> = service()
+    suspend fun testLocalDateTimeList(arg1 : List<LocalDateTime>) : List<LocalDateTime> = service()
 
 }
 
@@ -98,6 +138,14 @@ class TypesServiceProvider : TypesService, ServiceProvider {
 
     override suspend fun testFun(arg1: A) = arg1
 
+    override suspend fun testFun(arg1: Duration) = arg1
+
+    override suspend fun testFun(arg1: Instant) = arg1
+
+    override suspend fun testFun(arg1: LocalDate) = arg1
+
+    override suspend fun testFun(arg1: LocalDateTime) = arg1
+
     override suspend fun testBooleanList(arg1: List<Boolean>) = arg1
 
     override suspend fun testIntList(arg1: List<Int>) = arg1
@@ -112,6 +160,13 @@ class TypesServiceProvider : TypesService, ServiceProvider {
 
     override suspend fun testInstanceList(arg1: List<B>) = arg1
 
+    override suspend fun testDurationList(arg1 : List<Duration>) = arg1
+
+    override suspend fun testInstantList(arg1 : List<Instant>) = arg1
+
+    override suspend fun testLocalDateList(arg1 : List<LocalDate>) = arg1
+
+    override suspend fun testLocalDateTimeList(arg1 : List<LocalDateTime>) = arg1
 }
 
 data class A(

@@ -225,6 +225,10 @@ Services support these data types as function parameters and return values:
 * `Long`
 * `String`
 * `ByteArray`
+* `Duration` (from `kotlin.time`)
+* `Instant` (from `kotlinx.datetime`)
+* `LocalDate` (from `kotlinx.datetime`)
+* `LocalDateTime` (from `kotlinx.datetime`)
 * `UUID` (from Z2 Commons)
 
 ### Composite Types

@@ -112,6 +112,19 @@ const val PROTO_MESSAGE_INSTANCE_LIST = "instanceList"
 const val PROTO_ENCODER_CLASS = "ProtoEncoder"
 const val PROTO_DECODER_CLASS = "ProtoDecoder"
 
+const val TIME_PACKAGE = "kotlin.time"
+const val TIME_DURATION = "Duration"
+
+const val DATETIME_PACKAGE = "kotlinx.datetime"
+const val DATETIME_INSTANT = "Instant"
+const val DATETIME_LOCAL_DATE = "LocalDate"
+const val DATETIME_LOCAL_DATE_TIME = "LocalDateTime"
+
+const val PROTO_DURATION = "ProtoDuration"
+const val PROTO_INSTANT = "ProtoInstant"
+const val PROTO_LOCAL_DATE = "ProtoLocalDate"
+const val PROTO_LOCAL_DATE_TIME = "ProtoLocalDateTime"
+
 const val BUILDER_CALL_FIELD_NUMBER_INDEX = 0 // index of the fieldNumber in ProtoMessageBuilder.<type>(1, "")
 const val BUILDER_CALL_VALUE_INDEX = 1 // index of the value in ProtoMessageBuilder.<type>(1, "")
 const val BUILDER_CALL_ENCODER_INDEX = 1 // index of the encoder in ProtoMessageBuilder.instance(1, encoder, value)
