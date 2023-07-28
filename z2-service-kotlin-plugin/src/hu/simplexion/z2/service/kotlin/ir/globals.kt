@@ -8,12 +8,14 @@ const val RUNTIME_PACKAGE = "hu.simplexion.z2.service.runtime"
 const val SERVICE_CLASS = "Service"
 const val SERVICE_NAME_PROPERTY = "serviceName"
 
+const val CONSUMER_POSTFIX = "\$Consumer"
 const val SERVICE_PROVIDER_CLASS = "ServiceProvider"
 const val SERVICE_CONSUMER_CLASS = "ServiceConsumer"
 
 const val TRANSPORT_PACKAGE = "$RUNTIME_PACKAGE.transport"
 const val GLOBALS_CLASS = "GlobalsKt"
 const val DEFAULT_SERVICE_CALL_TRANSPORT = "defaultServiceCallTransport"
+const val GET_SERVICE = "getService"
 
 val FUN_NAMES_TO_SKIP = listOf("service", "equals", "hashCode", "toString")
 const val SERVICE_CONTEXT_PROPERTY = "serviceContext"

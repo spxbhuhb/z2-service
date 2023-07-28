@@ -27,11 +27,11 @@ Compressed example:
 ```kotlin
 // commonMain - client and server
 interface HelloService : Service {
-    suspend fun hello(myName : String) : String = service()
+    suspend fun hello(myName : String) : String
 }
 
 // jsMain or jvmMain - client
-object Hello : HelloService, ServiceConsumer
+val hello = getService<HelloService>()
 
 // jvmMain - server
 class HelloServiceProvider : HelloService, ServiceProvider {
@@ -49,10 +49,6 @@ fun main() {
 }
 ```
 
-## Known Bugs and Caveats
-
-* Unit return value doesn't work. :) Will fix tomorrow.
-
 ## Overview
 
 When using services we work with:
@@ -67,26 +63,24 @@ When using services we work with:
 Service definitions describe the communication between the client and the server. They are pretty straightforward:
 create an interface that extends `Service` and define the functions the service provides.
 
-All functions must have the `= service()` default implementation assigned.
-
 ```kotlin
 interface HelloService : Service {
     
-    suspend fun hello(myName : String) : String = service()
+    suspend fun hello(myName : String) : String
 
 }
 ```
 
 ### Service Consumers
 
-Service consumers let the clients use the service. Define an object  that implements the service definition 
-and `ServiceConsumer`.
+Service consumers let the clients use the service. Use the `getService` function to 
+get a consumer instance.
 
 The compiler plugin generates all the code for the client side, you simply call the functions.
 
 Definition: 
 ```kotlin
-object Hello : HelloService, ServiceConsumer
+val hello = getService<HelloService>()
 ```
 
 Call example (this uses the default service transport, more about that later):
@@ -94,7 +88,7 @@ Call example (this uses the default service transport, more about that later):
 ```kotlin
 fun main() {
     runBlocking {
-        println(Hello.hello("World"))
+        println(hello.hello("World"))
     }
 }
 ```
@@ -249,7 +243,7 @@ Gradle plugin dependency (build.gradle.kts):
 
 ```kotlin
 plugin {
-    id("hu.simplexion.z2.service") version "2023.7.24"
+    id("hu.simplexion.z2.service") version "2023.7.28"
 }
 ```
 
@@ -258,7 +252,7 @@ Runtime dependency (build.gradle.kts):
 ```kotlin
 val commonMain by getting {
     dependencies {
-        implementation("hu.simplexion.z2:z2-service-runtime:2023.7.24")
+        implementation("hu.simplexion.z2:z2-service-runtime:2023.7.28")
     }
 }
 ```
@@ -266,7 +260,7 @@ val commonMain by getting {
 For Ktor transport and dispatcher: 
 
 ```kotlin
-implementation("hu.simplexion.z2:z2-service-ktor:2023.7.24")
+implementation("hu.simplexion.z2:z2-service-ktor:2023.7.28")
 ```
 
 ## A Kind of Magic
@@ -278,8 +272,8 @@ examples between the [tests](z2-service-runtime/src/jvmTest/kotlin/hu/simplexion
 
 ### Client Side Transform
 
-When a class implements the `ServiceConsumer` interface, the plugin overrides the service functions
-like this:
+For each interface that extends `Service` the compiler plugin generates a class. If your interface is
+called `Hello`, the class name will be `Hello$Consumer`.
 
 ```kotlin
 package hu.simplexion.z2.service.runtime
@@ -287,7 +281,7 @@ package hu.simplexion.z2.service.runtime
 import hu.simplexion.z2.commons.protobuf.ProtoMessageBuilder
 import hu.simplexion.z2.commons.protobuf.ProtoOneString
 
-object TestServiceConsumer : TestService, ServiceConsumer {
+class Hello$Consumer : Hello {
 
     override suspend fun testFun(arg1: Int, arg2: String): String =
         defaultServiceCallTransport
@@ -302,6 +296,12 @@ object TestServiceConsumer : TestService, ServiceConsumer {
             )
 
 }
+```
+
+When you call `getService`, the plugin replaces the parameter with a new instance of the generated consumer class:
+
+```kotlin
+val hello = getService<Hello>(Hello$Consumer())
 ```
 
 ### Server Side Transform

@@ -3,12 +3,14 @@
  */
 package hu.simplexion.z2.service.kotlin.ir
 
+import hu.simplexion.z2.service.kotlin.ir.util.ConsumerCache
 import hu.simplexion.z2.service.kotlin.ir.util.ProtoCache
 import hu.simplexion.z2.service.kotlin.ir.util.ServiceFunctionCache
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.jvm.functionByName
 import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.util.constructors
+import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -19,8 +21,10 @@ class ServicePluginContext(
 ) {
 
     val serviceClass = SERVICE_CLASS.runtimeClass()
+    val serviceType = serviceClass.defaultType
+    val serviceName = serviceClass.owner.properties.first { it.name.identifier == SERVICE_NAME_PROPERTY }
+
     val serviceProviderType = SERVICE_PROVIDER_CLASS.runtimeClass().defaultType
-    val serviceConsumerType = SERVICE_CONSUMER_CLASS.runtimeClass().defaultType
 
     val serviceCallTransportClass = SERVICE_CALL_TRANSPORT_CLASS.runtimeClass(TRANSPORT_PACKAGE)
     val callFunction = serviceCallTransportClass.functionByName(CALL_FUNCTION)
@@ -29,6 +33,12 @@ class ServicePluginContext(
         irContext
             .referenceProperties(CallableId(FqName(RUNTIME_PACKAGE),Name.identifier(DEFAULT_SERVICE_CALL_TRANSPORT)))
             .first().owner.getter?.symbol
+    ) { "Missing $GLOBALS_CLASS, is the plugin added to gradle?" }
+
+    val getService = checkNotNull(
+        irContext
+            .referenceFunctions(CallableId(FqName(RUNTIME_PACKAGE),Name.identifier(GET_SERVICE)))
+            .first()
     ) { "Missing $GLOBALS_CLASS, is the plugin added to gradle?" }
 
     val protoMessageBuilderClass = PROTO_MESSAGE_BUILDER_CLASS.runtimeClass(PROTO_PACKAGE)
@@ -102,6 +112,7 @@ class ServicePluginContext(
 
     val serviceFunctionCache = ServiceFunctionCache()
     val protoCache = ProtoCache(this)
+    val consumerCache = ConsumerCache(this)
 
     fun String.runtimeClass(pkg: String = RUNTIME_PACKAGE) =
         checkNotNull(irContext.referenceClass(ClassId(FqName(pkg), Name.identifier(this)))) {

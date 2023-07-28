@@ -28,11 +28,13 @@ class BasicTest {
 
 interface TestService : Service {
 
-    suspend fun testFun(arg1 : Int, arg2 : String) : String = service()
+    suspend fun testFun(arg1 : Int, arg2 : String) : String
 
 }
 
-object TestServiceConsumer : TestService, ServiceConsumer {
+object TestServiceConsumer : TestService {
+
+    override var serviceName = "TestService"
 
     override suspend fun testFun(arg1: Int, arg2: String): String =
         defaultServiceCallTransport
@@ -49,6 +51,8 @@ object TestServiceConsumer : TestService, ServiceConsumer {
 }
 
 class TestServiceProvider : TestService, ServiceProvider {
+
+    override var serviceName = "TestService"
 
     override suspend fun dispatch(
         funName: String,

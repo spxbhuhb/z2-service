@@ -1,4 +1,4 @@
-package hu.simplexion.z2.service.kotlin.ir.klass
+package hu.simplexion.z2.service.kotlin.ir.proto
 
 import hu.simplexion.z2.service.kotlin.ir.MESSAGE_CALL_DECODER_INDEX
 import hu.simplexion.z2.service.kotlin.ir.MESSAGE_CALL_FIELD_NUMBER_INDEX

@@ -7,12 +7,12 @@ import hu.simplexion.z2.service.runtime.transport.ServiceCallTransport
 import kotlinx.coroutines.runBlocking
 
 interface BasicService : Service {
-    suspend fun list(): List<BasicServiceContext> = service()
+    suspend fun list(): List<BasicServiceContext>
 
-    suspend fun add(bsc : BasicServiceContext) : BasicServiceContext = service()
+    suspend fun add(bsc : BasicServiceContext) : BasicServiceContext
 }
 
-object BasicServiceConsumer : BasicService, ServiceConsumer
+val basicServiceConsumer = getService<BasicService>()
 
 class BasicServiceProvider : BasicService, ServiceProvider {
 
@@ -28,8 +28,8 @@ fun box(): String {
     runBlocking {
         defaultServiceCallTransport = DumpTransport()
         defaultServiceProviderRegistry += BasicServiceProvider()
-        BasicServiceConsumer.list()
-        BasicServiceConsumer.add(BasicServiceContext())
+        basicServiceConsumer.list()
+        basicServiceConsumer.add(BasicServiceContext())
     }
     return "OK"
 }

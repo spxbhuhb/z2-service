@@ -51,35 +51,35 @@ fun box(): String {
         defaultServiceCallTransport = DumpTransport()
         defaultServiceProviderRegistry += TypesServiceProvider()
 
-        if (TypesServiceConsumer.testFun(booleanVal) != booleanVal) errors += "booleanValue"
-        if (TypesServiceConsumer.testFun(intVal) != intVal) errors += "intVal"
-        if (TypesServiceConsumer.testFun(longVal) != longVal) errors += "longVal"
-        if (TypesServiceConsumer.testFun(stringVal) != stringVal) errors += "stringVal"
-        if (!TypesServiceConsumer.testFun(byteArrayVal).contentEquals(byteArrayVal)) errors += "byteArrayVal"
-        if (TypesServiceConsumer.testFun(uuidVal) != uuidVal) errors += "uuidVal"
+        if (typesServiceConsumer.testFun(booleanVal) != booleanVal) errors += "booleanValue"
+        if (typesServiceConsumer.testFun(intVal) != intVal) errors += "intVal"
+        if (typesServiceConsumer.testFun(longVal) != longVal) errors += "longVal"
+        if (typesServiceConsumer.testFun(stringVal) != stringVal) errors += "stringVal"
+        if (!typesServiceConsumer.testFun(byteArrayVal).contentEquals(byteArrayVal)) errors += "byteArrayVal"
+        if (typesServiceConsumer.testFun(uuidVal) != uuidVal) errors += "uuidVal"
 
-        if (TypesServiceConsumer.testFun(instanceVal) != instanceVal) errors += "instanceVal"
+        if (typesServiceConsumer.testFun(instanceVal) != instanceVal) errors += "instanceVal"
 
-        if (TypesServiceConsumer.testFun(durationVal) != durationVal) errors += "durationVal"
-        if (TypesServiceConsumer.testFun(instantVal) != instantVal) errors += "instantVal"
-        if (TypesServiceConsumer.testFun(localDateVal) != localDateVal) errors += "localDateVal"
-        if (TypesServiceConsumer.testFun(localDateTimeVal) != localDateTimeVal) errors += "localDateTimeVal"
+        if (typesServiceConsumer.testFun(durationVal) != durationVal) errors += "durationVal"
+        if (typesServiceConsumer.testFun(instantVal) != instantVal) errors += "instantVal"
+        if (typesServiceConsumer.testFun(localDateVal) != localDateVal) errors += "localDateVal"
+        if (typesServiceConsumer.testFun(localDateTimeVal) != localDateTimeVal) errors += "localDateTimeVal"
 
-        if (TypesServiceConsumer.testBooleanList(booleanListVal) != booleanListVal) errors += "booleanListVal"
-        if (TypesServiceConsumer.testIntList(intListVal) != intListVal) errors += "intListVal"
-        if (TypesServiceConsumer.testLongList(longListVal) != longListVal) errors += "longListVal"
-        if (TypesServiceConsumer.testStringList(stringListVal) != stringListVal) errors += "stringListVal"
-        TypesServiceConsumer.testByteArrayList(byteArrayListVal).forEachIndexed { index, bytes ->
+        if (typesServiceConsumer.testBooleanList(booleanListVal) != booleanListVal) errors += "booleanListVal"
+        if (typesServiceConsumer.testIntList(intListVal) != intListVal) errors += "intListVal"
+        if (typesServiceConsumer.testLongList(longListVal) != longListVal) errors += "longListVal"
+        if (typesServiceConsumer.testStringList(stringListVal) != stringListVal) errors += "stringListVal"
+        typesServiceConsumer.testByteArrayList(byteArrayListVal).forEachIndexed { index, bytes ->
             if (!bytes.contentEquals(byteArrayListVal[index])) errors += "byteArrayListVal"
         }
-        if (TypesServiceConsumer.testUuidList(uuidListVal) != uuidListVal) errors += "uuidListVal"
+        if (typesServiceConsumer.testUuidList(uuidListVal) != uuidListVal) errors += "uuidListVal"
 
-        if (TypesServiceConsumer.testInstanceList(instanceListVal) != instanceListVal) errors += "instanceListVal"
+        if (typesServiceConsumer.testInstanceList(instanceListVal) != instanceListVal) errors += "instanceListVal"
 
-        if (TypesServiceConsumer.testDurationList(durationListVal) != durationListVal) errors += "durationListVal"
-        if (TypesServiceConsumer.testInstantList(instantListVal) != instantListVal) errors += "instantListVal"
-        if (TypesServiceConsumer.testLocalDateList(localDateListVal) != localDateListVal) errors += "localDateListVal"
-        if (TypesServiceConsumer.testLocalDateTimeList(localDateTimeListVal) != localDateTimeListVal) errors += "localDateTimeListVal"
+        if (typesServiceConsumer.testDurationList(durationListVal) != durationListVal) errors += "durationListVal"
+        if (typesServiceConsumer.testInstantList(instantListVal) != instantListVal) errors += "instantListVal"
+        if (typesServiceConsumer.testLocalDateList(localDateListVal) != localDateListVal) errors += "localDateListVal"
+        if (typesServiceConsumer.testLocalDateTimeList(localDateTimeListVal) != localDateTimeListVal) errors += "localDateTimeListVal"
 
     }
 
@@ -88,37 +88,37 @@ fun box(): String {
 
 interface TypesService : Service {
 
-    suspend fun testFun() : Unit = service()
+    suspend fun testFun()
 
-    suspend fun testFun(arg1: Boolean): Boolean = service()
-    suspend fun testFun(arg1: Int): Int = service()
-    suspend fun testFun(arg1: Long): Long = service()
-    suspend fun testFun(arg1: String): String = service()
-    suspend fun testFun(arg1: ByteArray): ByteArray = service()
-    suspend fun testFun(arg1: UUID<TypesService>): UUID<TypesService> = service()
-    suspend fun testFun(arg1: A): A = service()
+    suspend fun testFun(arg1: Boolean): Boolean
+    suspend fun testFun(arg1: Int): Int
+    suspend fun testFun(arg1: Long): Long
+    suspend fun testFun(arg1: String): String
+    suspend fun testFun(arg1: ByteArray): ByteArray
+    suspend fun testFun(arg1: UUID<TypesService>): UUID<TypesService>
+    suspend fun testFun(arg1: A): A
 
-    suspend fun testFun(arg1 : Duration) : Duration = service()
-    suspend fun testFun(arg1 : Instant) : Instant = service()
-    suspend fun testFun(arg1 : LocalDate) : LocalDate = service()
-    suspend fun testFun(arg1 : LocalDateTime) : LocalDateTime = service()
+    suspend fun testFun(arg1 : Duration) : Duration
+    suspend fun testFun(arg1 : Instant) : Instant
+    suspend fun testFun(arg1 : LocalDate) : LocalDate
+    suspend fun testFun(arg1 : LocalDateTime) : LocalDateTime
 
-    suspend fun testBooleanList(arg1: List<Boolean>): List<Boolean> = service()
-    suspend fun testIntList(arg1: List<Int>): List<Int> = service()
-    suspend fun testLongList(arg1: List<Long>): List<Long> = service()
-    suspend fun testStringList(arg1: List<String>): List<String> = service()
-    suspend fun testByteArrayList(arg1: List<ByteArray>): List<ByteArray> = service()
-    suspend fun testUuidList(arg1: List<UUID<TypesService>>): List<UUID<TypesService>> = service()
-    suspend fun testInstanceList(arg1: List<B>): List<B> = service()
+    suspend fun testBooleanList(arg1: List<Boolean>): List<Boolean>
+    suspend fun testIntList(arg1: List<Int>): List<Int>
+    suspend fun testLongList(arg1: List<Long>): List<Long>
+    suspend fun testStringList(arg1: List<String>): List<String>
+    suspend fun testByteArrayList(arg1: List<ByteArray>): List<ByteArray>
+    suspend fun testUuidList(arg1: List<UUID<TypesService>>): List<UUID<TypesService>>
+    suspend fun testInstanceList(arg1: List<B>): List<B>
 
-    suspend fun testDurationList(arg1 : List<Duration>) : List<Duration> = service()
-    suspend fun testInstantList(arg1 : List<Instant>) : List<Instant> = service()
-    suspend fun testLocalDateList(arg1 : List<LocalDate>) : List<LocalDate> = service()
-    suspend fun testLocalDateTimeList(arg1 : List<LocalDateTime>) : List<LocalDateTime> = service()
+    suspend fun testDurationList(arg1 : List<Duration>) : List<Duration>
+    suspend fun testInstantList(arg1 : List<Instant>) : List<Instant>
+    suspend fun testLocalDateList(arg1 : List<LocalDate>) : List<LocalDate>
+    suspend fun testLocalDateTimeList(arg1 : List<LocalDateTime>) : List<LocalDateTime>
 
 }
 
-object TypesServiceConsumer : TypesService, ServiceConsumer
+val typesServiceConsumer = getService<TypesService>()
 
 class TypesServiceProvider : TypesService, ServiceProvider {
 

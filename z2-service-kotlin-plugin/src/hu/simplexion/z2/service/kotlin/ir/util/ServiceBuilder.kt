@@ -1,6 +1,5 @@
-package hu.simplexion.z2.service.kotlin.ir.klass
+package hu.simplexion.z2.service.kotlin.ir.util
 
-import hu.simplexion.z2.service.kotlin.ir.util.IrBuilder
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
@@ -12,16 +11,14 @@ import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 
 interface ServiceBuilder : IrBuilder {
 
-    var transformedClass: IrClass
-
     var serviceNameGetter: IrSimpleFunctionSymbol
 
     val serviceFunctions: MutableList<IrSimpleFunctionSymbol>
 
     val serviceNames : MutableList<String>
 
-    fun collectServiceFunctions() {
-        for (superType in transformedClass.superTypes) {
+    fun collectServiceFunctions(klass : IrClass) {
+        for (superType in klass.superTypes) {
             if (superType.isSubtypeOfClass(pluginContext.serviceClass)) {
                 serviceNames += superType.classFqName!!.asString()
                 serviceFunctions += pluginContext.serviceFunctionCache[superType]

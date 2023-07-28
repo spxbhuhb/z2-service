@@ -1,15 +1,17 @@
 /*
  * Copyright © 2022-2023, Simplexion, Hungary and contributors. Use of this source code is governed by the Apache 2.0 license.
  */
-package hu.simplexion.z2.service.kotlin.ir.klass
+package hu.simplexion.z2.service.kotlin.ir.provider
 
 import hu.simplexion.z2.service.kotlin.ir.*
+import hu.simplexion.z2.service.kotlin.ir.proto.ProtoMessageBuilderIrBuilder
+import hu.simplexion.z2.service.kotlin.ir.proto.ProtoMessageIrBuilder
 import hu.simplexion.z2.service.kotlin.ir.util.FunctionSignature
+import hu.simplexion.z2.service.kotlin.ir.util.ServiceBuilder
 import org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext
 import org.jetbrains.kotlin.backend.common.ir.addDispatchReceiver
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.backend.common.lower.irImplicitCoercionToUnit
-import org.jetbrains.kotlin.backend.common.lower.irThrow
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.builders.declarations.addTypeParameter
@@ -19,17 +21,18 @@ import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrBranch
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
-import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
-import org.jetbrains.kotlin.ir.types.defaultType
-import org.jetbrains.kotlin.ir.util.*
+import org.jetbrains.kotlin.ir.util.copyTo
+import org.jetbrains.kotlin.ir.util.defaultType
+import org.jetbrains.kotlin.ir.util.getPropertyGetter
+import org.jetbrains.kotlin.ir.util.getSimpleFunction
 import org.jetbrains.kotlin.name.Name
 
-class ServiceProviderClassTransform(
+class ProviderClassTransform(
     override val pluginContext: ServicePluginContext
 ) : IrElementTransformerVoidWithContext(), ServiceBuilder {
 
-    override lateinit var transformedClass: IrClass
+    lateinit var transformedClass: IrClass
 
     override lateinit var serviceNameGetter: IrSimpleFunctionSymbol
     lateinit var serviceContextGetter: IrSimpleFunctionSymbol
@@ -54,7 +57,7 @@ class ServiceProviderClassTransform(
         serviceNameGetter = checkNotNull(declaration.getPropertyGetter(SERVICE_NAME_PROPERTY))
         serviceContextGetter = checkNotNull(declaration.getPropertyGetter(SERVICE_CONTEXT_PROPERTY))
 
-        collectServiceFunctions()
+        collectServiceFunctions(transformedClass)
 
         super.visitClassNew(declaration)
 
@@ -67,13 +70,14 @@ class ServiceProviderClassTransform(
 
     override fun visitPropertyNew(declaration: IrProperty): IrStatement {
         if (declaration.name.identifier != SERVICE_NAME_PROPERTY) return declaration
-        return declaration.accept(ServiceNamePropertyTransform(pluginContext, this), null) as IrStatement
+        ServiceNamePropertyTransform(pluginContext, this, transformedClass, declaration).build()
+        return declaration
     }
 
     override fun visitFunctionNew(declaration: IrFunction): IrStatement {
         val function = declaration.asServiceFun() ?: return declaration
 
-        if (function.isFakeOverride) replaceFakeOverrideWithThrow(function)
+        if (function.isFakeOverride) return declaration
 
         val contextLess = contextLessDeclaration(function)
 
@@ -95,21 +99,6 @@ class ServiceProviderClassTransform(
     fun IrSimpleFunction.setDispatchReceiver() {
         val thisReceiver = transformedClass.thisReceiver!!
         dispatchReceiverParameter = thisReceiver.copyTo(this, type = thisReceiver.type)
-    }
-
-    fun replaceFakeOverrideWithThrow(function: IrSimpleFunction) {
-        function.isFakeOverride = false
-        function.origin = IrDeclarationOrigin.DEFINED
-        function.body = DeclarationIrBuilder(irContext, function.symbol).irBlockBody {
-            +irThrow(
-                IrConstructorCallImpl(
-                    SYNTHETIC_OFFSET, SYNTHETIC_OFFSET,
-                    pluginContext.notImplementedErrorClass.defaultType,
-                    pluginContext.notImplementedErrorClass.constructors.first { it.owner.isPrimary },
-                    0, 0, 0
-                )
-            )
-        }
     }
 
     fun contextLessDeclaration(original: IrSimpleFunction): IrSimpleFunction {

@@ -1,4 +1,4 @@
-package hu.simplexion.z2.service.kotlin.ir.klass
+package hu.simplexion.z2.service.kotlin.ir.proto
 
 import hu.simplexion.z2.service.kotlin.ir.ServicePluginContext
 import hu.simplexion.z2.service.kotlin.ir.util.IrBuilder
