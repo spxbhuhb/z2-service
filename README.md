@@ -227,7 +227,7 @@ Services support these data types as function parameters and return values:
 
 ### Composite Types
 
-[Z2 Schematic](https://github.com/spxbhuhb/z2-schematic) classes will work out-of-the-box. **not implemented yet**
+[Z2 Schematic](https://github.com/spxbhuhb/z2-schematic) classes work out-of-the-box.
 
 Any other classes that support Protocol Buffer decoding/encoding:
 
