@@ -22,6 +22,8 @@ The library has a runtime part and a Kotlin compiler plugin that transforms the 
 * [Gradle Setup](#gradle-setup)
 * [Example Project](https://github.com/spxbhuhb/z2-service-example)
 
+If you refresh the plugin version you have to run `gradle clean` to force code refresh.
+
 Compressed example:
 
 ```kotlin

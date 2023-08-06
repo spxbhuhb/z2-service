@@ -7,7 +7,8 @@ import hu.simplexion.z2.commons.protobuf.ProtoMessageBuilder
 import hu.simplexion.z2.commons.util.UUID
 
 data class BasicServiceContext(
-    val uuid: UUID<BasicServiceContext> = UUID.nil()
+    val uuid: UUID<BasicServiceContext> = UUID(),
+    val data : Any? = null
 ) : ServiceContext {
     companion object : ProtoDecoder<BasicServiceContext>, ProtoEncoder<BasicServiceContext> {
 

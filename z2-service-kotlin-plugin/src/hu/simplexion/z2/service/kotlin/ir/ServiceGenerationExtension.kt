@@ -17,13 +17,13 @@ internal class ServiceGenerationExtension : IrGenerationExtension {
         ServicePluginContext(pluginContext).apply {
 
             debug("service") { "====  START  ==".padEnd(80, '=') }
-            debug("service") { moduleFragment.dump() }
 
             // order is important here
             moduleFragment.accept(ProtoCompanionVisitor(this, protoCache), null)
             moduleFragment.accept(ServiceModuleTransform(this), null)
             moduleFragment.accept(GetConsumerTransform(this), null)
 
+            debug("service") { moduleFragment.dump() }
             debug("service") { "====  END  ====".padEnd(80, '=') }
         }
     }

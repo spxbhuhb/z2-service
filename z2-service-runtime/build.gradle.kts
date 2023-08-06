@@ -39,7 +39,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                api("hu.simplexion.z2:z2-commons:${z2_version}")
+                implementation("hu.simplexion.z2:z2-commons:${z2_version}")
             }
         }
         commonTest {

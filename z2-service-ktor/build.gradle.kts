@@ -14,7 +14,10 @@ val baseName = "z2-service-ktor"
 val pomName = "Z2 Service Ktor Integration"
 val scmPath = "spxbhuhb/z2-service"
 
+
+val z2_commons_version: String by project
 val z2_service_version: String by project
+
 val ktor_version: String by project
 val logback_version: String by project
 
@@ -41,6 +44,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation("io.ktor:ktor-client-websockets:$ktor_version")
+                implementation("hu.simplexion.z2:z2-commons:${z2_commons_version}")
                 implementation("hu.simplexion.z2:z2-service-runtime:${z2_service_version}")
             }
         }
