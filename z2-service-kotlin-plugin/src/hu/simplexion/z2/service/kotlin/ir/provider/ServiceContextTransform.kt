@@ -19,7 +19,7 @@ class ServiceContextTransform(
 
 
     override fun visitCall(expression: IrCall): IrExpression {
-        if (expression.symbol != serviceContextGetter) return expression
+        if (expression.symbol != serviceContextGetter) return super.visitCall(expression)
         return irGet(function.valueParameters.last())
     }
 
