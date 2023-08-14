@@ -195,8 +195,7 @@ class ProviderClassTransform(
                             pluginContext,
                             irGet(dispatch.valueParameters[DISPATCH_RESPONSE_INDEX])
                         ).next(
-                            serviceFunction.function.returnType,
-                            1
+                            serviceFunction.function.returnType
                         ) { callServiceFunction(dispatch, serviceFunction.function) }
                     ) { "unsupported type return type: ${serviceFunction.function.symbol}" }
                 )

@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
+import org.jetbrains.kotlin.ir.types.isNullable
 import org.jetbrains.kotlin.ir.util.SYNTHETIC_OFFSET
 
 class ProtoDecoderIrBuilder(
@@ -24,30 +25,30 @@ class ProtoDecoderIrBuilder(
     fun primitive(type: IrType): IrExpression? =
         when (type) {
             irBuiltIns.unitType -> irGetObject(pluginContext.protoOneUnit)
-            irBuiltIns.booleanType -> irGetObject(pluginContext.protoOneBoolean)
-            irBuiltIns.intType -> irGetObject(pluginContext.protoOneInt)
-            irBuiltIns.longType -> irGetObject(pluginContext.protoOneLong)
-            irBuiltIns.stringType -> irGetObject(pluginContext.protoOneString)
+            irBuiltIns.booleanType -> irGetObject(if (type.isNullable()) pluginContext.protoOneBooleanOrNull else pluginContext.protoOneBoolean)
+            irBuiltIns.intType -> irGetObject(if (type.isNullable()) pluginContext.protoOneIntOrNull else pluginContext.protoOneInt)
+            irBuiltIns.longType -> irGetObject(if (type.isNullable()) pluginContext.protoOneLongOrNull else pluginContext.protoOneLong)
+            irBuiltIns.stringType -> irGetObject(if (type.isNullable()) pluginContext.protoOneStringOrNull else pluginContext.protoOneString)
             else -> null
         }
-            ?: type.ifUuid { irGetObject(pluginContext.protoOneUuid) }
-            ?: type.ifByteArray { irGetObject(pluginContext.protoOneByteArray) }
+            ?: type.ifUuid { irGetObject(if (type.isNullable()) pluginContext.protoOneUuidOrNull else pluginContext.protoOneUuid) }
+            ?: type.ifByteArray { irGetObject(if (type.isNullable()) pluginContext.protoOneByteArrayOrNull else pluginContext.protoOneByteArray) }
 
     fun primitiveList(type: IrType): IrExpression? {
-        if (!type.isList) return null
+        if (! type.isList) return null
 
         // FIXME hackish list item type retrieval
         val itemType = (type as IrSimpleTypeImpl).arguments.first() as IrType
 
         return when (itemType) {
-            irBuiltIns.intType -> irGetObject(pluginContext.protoOneIntList)
-            irBuiltIns.longType -> irGetObject(pluginContext.protoOneLongList)
-            irBuiltIns.stringType -> irGetObject(pluginContext.protoOneStringList)
+            irBuiltIns.intType -> irGetObject(if (type.isNullable()) pluginContext.protoOneIntListOrNull else pluginContext.protoOneIntList)
+            irBuiltIns.longType -> irGetObject(if (type.isNullable()) pluginContext.protoOneLongListOrNull else pluginContext.protoOneLongList)
+            irBuiltIns.stringType -> irGetObject(if (type.isNullable()) pluginContext.protoOneStringListOrNull else pluginContext.protoOneStringList)
             else -> null
         }
-            ?: itemType.ifBoolean { irGetObject(pluginContext.protoOneBooleanList) }
-            ?: itemType.ifUuid { irGetObject(pluginContext.protoOneUuidList) }
-            ?: itemType.ifByteArray { irGetObject(pluginContext.protoOneByteArrayList) }
+            ?: itemType.ifBoolean { irGetObject(if (type.isNullable()) pluginContext.protoOneBooleanListOrNull else pluginContext.protoOneBooleanList) }
+            ?: itemType.ifUuid { irGetObject(if (type.isNullable()) pluginContext.protoOneUuidListOrNull else pluginContext.protoOneUuidList) }
+            ?: itemType.ifByteArray { irGetObject(if (type.isNullable()) pluginContext.protoOneByteArrayListOrNull else pluginContext.protoOneByteArrayList) }
     }
 
     fun instance(type: IrType): IrExpression? {
@@ -55,8 +56,8 @@ class ProtoDecoderIrBuilder(
 
         return IrConstructorCallImpl(
             SYNTHETIC_OFFSET, SYNTHETIC_OFFSET,
-            pluginContext.protoOneInstance.defaultType,
-            pluginContext.protoOneInstanceConstructor,
+            if (type.isNullable()) pluginContext.protoOneInstanceOrNull.defaultType else pluginContext.protoOneInstance.defaultType,
+            if (type.isNullable()) pluginContext.protoOneInstanceOrNullConstructor else pluginContext.protoOneInstanceConstructor,
             0, 0, 1
         ).also {
             it.putValueArgument(0, irGetObject(encoder))
@@ -64,7 +65,7 @@ class ProtoDecoderIrBuilder(
     }
 
     fun instanceList(type: IrType): IrExpression? {
-        if (!type.isList) return null
+        if (! type.isList) return null
 
         // FIXME hackish list item type retrieval
         val itemType = (type as IrSimpleTypeImpl).arguments.first() as IrType
@@ -73,8 +74,8 @@ class ProtoDecoderIrBuilder(
 
         return IrConstructorCallImpl(
             SYNTHETIC_OFFSET, SYNTHETIC_OFFSET,
-            pluginContext.protoOneInstanceList.defaultType,
-            pluginContext.protoOneInstanceListConstructor,
+            if (type.isNullable()) pluginContext.protoOneInstanceListOrNull.defaultType else pluginContext.protoOneInstanceList.defaultType,
+            if (type.isNullable()) pluginContext.protoOneInstanceListOrNullConstructor else  pluginContext.protoOneInstanceListConstructor,
             0, 0, 1
         ).also {
             it.putValueArgument(0, irGetObject(encoder))
