@@ -12,11 +12,14 @@ import org.jetbrains.kotlin.ir.types.isNullable
 
 class ProtoMessageIrBuilder(
     override val pluginContext: ServicePluginContext,
-    val dispatchReceiver: IrExpression
+    val dispatchReceiver: () -> IrExpression
 ) : IrBuilder {
 
     var current: IrExpression? = null
+
     var fieldNumber = 1
+
+    val protoCache = pluginContext.protoCache
 
     fun get(valueParameter: IrValueParameter): IrExpression? {
         primitive(valueParameter)?.let { return current }
@@ -29,20 +32,12 @@ class ProtoMessageIrBuilder(
     fun primitive(valueParameter: IrValueParameter): Boolean? {
         val type = valueParameter.type
 
-        val builderFun = when (type) {
-            irBuiltIns.booleanType -> if (type.isNullable()) pluginContext.protoMessageBooleanOrNull else pluginContext.protoMessageBoolean
-            irBuiltIns.intType -> if (type.isNullable()) pluginContext.protoMessageIntOrNull else pluginContext.protoMessageInt
-            irBuiltIns.longType -> if (type.isNullable()) pluginContext.protoMessageLongOrNull else pluginContext.protoMessageLong
-            irBuiltIns.stringType -> if (type.isNullable()) pluginContext.protoMessageStringOrNull else pluginContext.protoMessageString
-            else -> null
-        }
-            ?: valueParameter.type.ifUuid { if (type.isNullable()) pluginContext.protoMessageUuidOrNull else pluginContext.protoMessageUuid }
-            ?: valueParameter.type.ifByteArray { if (type.isNullable()) pluginContext.protoMessageByteArrayOrNull else pluginContext.protoMessageByteArray }
-            ?: return null
+        val nullable = type.isNullable()
+        val builtInEntry = protoCache.primitive(type) ?: return null
 
         current = irCall(
-            builderFun,
-            dispatchReceiver = dispatchReceiver
+            if (nullable) builtInEntry.decodeOrNull else builtInEntry.decode,
+            dispatchReceiver = dispatchReceiver()
         ).also {
             it.putValueArgument(0, irConst(fieldNumber ++))
             if (type.isNullable()) it.putValueArgument(1, irConst(fieldNumber ++))
@@ -54,36 +49,24 @@ class ProtoMessageIrBuilder(
     fun primitiveList(valueParameter: IrValueParameter): Boolean? {
         val type = valueParameter.type
 
-        if (! type.isList) return null
-
-        // FIXME hackish list item type retrieval
-        val itemType = (type as IrSimpleTypeImpl).arguments.first() as IrType
-
-        val builderFun = when (itemType) {
-            irBuiltIns.intType -> if (type.isNullable()) pluginContext.protoMessageIntListOrNull else pluginContext.protoMessageIntList
-            irBuiltIns.longType -> if (type.isNullable()) pluginContext.protoMessageLongListOrNull else pluginContext.protoMessageLongList
-            irBuiltIns.stringType -> if (type.isNullable()) pluginContext.protoMessageStringListOrNull else pluginContext.protoMessageStringList
-            else -> null
-        }
-            ?: itemType.ifBoolean { if (type.isNullable()) pluginContext.protoMessageBooleanListOrNull else pluginContext.protoMessageBooleanList }
-            ?: itemType.ifUuid { if (type.isNullable()) pluginContext.protoMessageUuidListOrNull else pluginContext.protoMessageUuidList }
-            ?: itemType.ifByteArray { if (type.isNullable()) pluginContext.protoMessageByteArrayListOrNull else pluginContext.protoMessageByteArrayList }
-            ?: return null
+        val builtInEntry = protoCache.list(type) ?: return null
+        val nullable = type.isNullable()
 
         current = irCall(
-            builderFun,
-            dispatchReceiver = dispatchReceiver
+            if (nullable) builtInEntry.decodeListOrNull else builtInEntry.decodeList,
+            dispatchReceiver = dispatchReceiver()
         ).also {
             it.putValueArgument(0, irConst(fieldNumber ++))
-            if (type.isNullable()) it.putValueArgument(1, irConst(fieldNumber ++))
+            if (nullable) it.putValueArgument(1, irConst(fieldNumber ++))
         }
 
         return true
     }
 
     fun instance(valueParameter: IrValueParameter): Boolean? {
+        val type = valueParameter.type
         val encoder = pluginContext.protoCache[valueParameter.type]?.symbol ?: return null
-        val buildFun = if (valueParameter.type.isNullable()) pluginContext.protoMessageInstanceOrNull else pluginContext.protoMessageInstance
+        val buildFun = if (type.isNullable()) protoCache.protoInstance.decodeOrNull else protoCache.protoInstance.decode
 
         decode(valueParameter, encoder, buildFun)
 
@@ -99,7 +82,7 @@ class ProtoMessageIrBuilder(
         val itemType = (type as IrSimpleTypeImpl).arguments.first() as IrType
 
         val encoder = pluginContext.protoCache[itemType]?.symbol ?: return null
-        val buildFun = if (type.isNullable()) pluginContext.protoMessageInstanceListOrNull else pluginContext.protoMessageInstanceList
+        val buildFun = if (type.isNullable()) protoCache.protoInstance.decodeListOrNull else protoCache.protoInstance.decodeList
 
         decode(valueParameter, encoder, buildFun)
 
@@ -109,7 +92,7 @@ class ProtoMessageIrBuilder(
     fun decode(valueParameter: IrValueParameter, encoder: IrClassSymbol, buildFun: IrFunctionSymbol) {
         current = irCall(
             buildFun,
-            dispatchReceiver = dispatchReceiver
+            dispatchReceiver = dispatchReceiver()
         ).also {
             var index = 0
             it.putValueArgument(index ++, irConst(fieldNumber ++))

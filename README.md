@@ -212,7 +212,15 @@ fun Application.module() {
 
 ## Supported Data Types
 
-Services support these data types as function parameters and return values:
+Services support the following data types as function parameters and return values.
+
+### Nulls
+
+`null`s are supported for simple and composite types, except nullable items in lists (the lists
+themselves can be null).
+
+While I can imagine proper use cases for nullable list items it would require considerable
+effort to support them. I might add it when the need arises, but it's not planned for now.
 
 ### Simple Types
 

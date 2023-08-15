@@ -4,8 +4,8 @@
 package hu.simplexion.z2.service.kotlin.ir.consumer
 
 import hu.simplexion.z2.service.kotlin.ir.*
-import hu.simplexion.z2.service.kotlin.ir.proto.ProtoDecoderIrBuilder
 import hu.simplexion.z2.service.kotlin.ir.proto.ProtoMessageBuilderIrBuilder
+import hu.simplexion.z2.service.kotlin.ir.proto.ProtoOneIrBuilder
 import hu.simplexion.z2.service.kotlin.ir.util.FunctionSignature
 import hu.simplexion.z2.service.kotlin.ir.util.IrClassBaseBuilder
 import hu.simplexion.z2.service.kotlin.ir.util.ServiceBuilder
@@ -119,7 +119,7 @@ class ConsumerClassBuilder(
                         it.putValueArgument(CALL_SERVICE_NAME_INDEX, getServiceName(function))
                         it.putValueArgument(CALL_FUN_NAME_INDEX, irConst(FunctionSignature(pluginContext, function).signature()))
                         it.putValueArgument(CALL_PAYLOAD_INDEX, buildPayload(function))
-                        it.putValueArgument(CALL_DECODER_INDEX, ProtoDecoderIrBuilder(pluginContext).getDecoder(function.returnType))
+                        it.putValueArgument(CALL_DECODER_INDEX, ProtoOneIrBuilder(pluginContext).getDecoder(function.returnType))
                     }
                 )
             }
@@ -147,7 +147,7 @@ class ConsumerClassBuilder(
         }
 
         return irCall(
-            pluginContext.protoBuilderPack,
+            pluginContext.protoCache.protoMessageBuilderPack,
             dispatchReceiver = protoBuilder.current
         )
     }

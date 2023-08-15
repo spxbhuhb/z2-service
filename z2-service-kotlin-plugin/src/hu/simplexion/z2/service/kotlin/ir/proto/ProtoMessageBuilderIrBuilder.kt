@@ -7,8 +7,10 @@ import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
-import org.jetbrains.kotlin.ir.types.*
+import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
+import org.jetbrains.kotlin.ir.types.isNullable
 import org.jetbrains.kotlin.ir.util.SYNTHETIC_OFFSET
 
 class ProtoMessageBuilderIrBuilder(
@@ -20,10 +22,12 @@ class ProtoMessageBuilderIrBuilder(
 
     var fieldNumber = 1
 
+    val protoCache = pluginContext.protoCache
+
     var current: IrExpression = start ?: IrConstructorCallImpl(
         SYNTHETIC_OFFSET, SYNTHETIC_OFFSET,
-        pluginContext.protoMessageBuilderClass.defaultType,
-        pluginContext.protoMessageBuilderConstructor,
+        protoCache.protoMessageBuilderClass.defaultType,
+        protoCache.protoMessageBuilderConstructor,
         0, 0, 0
     )
 
@@ -43,27 +47,16 @@ class ProtoMessageBuilderIrBuilder(
     }
 
     fun primitive(type: IrType, value: () -> IrExpression): Boolean? {
-        val classifier = type.classifierOrNull ?: return null
+        val builtInEntry = protoCache.primitive(type) ?: return null
         val nullable = type.isNullable()
 
-        val builderFun = when (classifier.signature) {
-            IdSignatureValues._boolean -> if (nullable) pluginContext.protoBuilderBooleanOrNull else pluginContext.protoBuilderBoolean
-            IdSignatureValues._int -> if (type.isNullable()) pluginContext.protoBuilderIntOrNull else pluginContext.protoBuilderInt
-            IdSignatureValues._long -> if (type.isNullable()) pluginContext.protoBuilderLongOrNull else pluginContext.protoBuilderLong
-            pluginContext.stringSignature -> if (type.isNullable()) pluginContext.protoBuilderStringOrNull else pluginContext.protoBuilderString
-            pluginContext.uuidSignature -> if (type.isNullable()) pluginContext.protoBuilderUuidOrNull else pluginContext.protoBuilderUuid
-            else -> null
-        }
-            ?: type.ifByteArray { if (type.isNullable()) pluginContext.protoBuilderByteArrayOrNull else pluginContext.protoBuilderByteArray }
-            ?: return null
-
         current = irCall(
-            builderFun,
+            if (nullable) builtInEntry.encodeOrNull else builtInEntry.encode,
             dispatchReceiver = current
         ).also {
             var index = 0
             it.putValueArgument(index ++, irConst(fieldNumber ++))
-            if (type.isNullable()) it.putValueArgument(index ++, irConst(fieldNumber ++))
+            if (nullable) it.putValueArgument(index ++, irConst(fieldNumber ++))
             it.putValueArgument(index, value())
         }
 
@@ -71,31 +64,17 @@ class ProtoMessageBuilderIrBuilder(
     }
 
     fun primitiveList(type: IrType, value: () -> IrExpression): Boolean? {
-        if (! type.isList) return null
 
-        // FIXME hackish list item type retrieval
-        val itemType = (type as IrSimpleTypeImpl).arguments.first() as IrType
-        val classifier = itemType.classifierOrNull ?: return null
-        check(! itemType.isNullable()) { "nullable items in lists are not supported" }
-
-        val builderFun = when (classifier.signature) {
-            IdSignatureValues._boolean -> if (type.isNullable()) pluginContext.protoBuilderBooleanListOrNull else pluginContext.protoBuilderBooleanList
-            IdSignatureValues._int -> if (type.isNullable()) pluginContext.protoBuilderIntListOrNull else pluginContext.protoBuilderIntList
-            IdSignatureValues._long -> if (type.isNullable()) pluginContext.protoBuilderLongListOrNull else pluginContext.protoBuilderLongList
-            pluginContext.stringSignature -> if (type.isNullable()) pluginContext.protoBuilderStringListOrNull else pluginContext.protoBuilderStringList
-            pluginContext.uuidSignature -> if (type.isNullable()) pluginContext.protoBuilderUuidListOrNull else pluginContext.protoBuilderUuidList
-            else -> null
-        }
-            ?: itemType.ifByteArray { if (type.isNullable()) pluginContext.protoBuilderByteArrayListOrNull else pluginContext.protoBuilderByteArrayList }
-            ?: return null
+        val builtInEntry = protoCache.list(type) ?: return null
+        val nullable = type.isNullable()
 
         current = irCall(
-            builderFun,
+            if (nullable) builtInEntry.encodeListOrNull else builtInEntry.encodeList,
             dispatchReceiver = current
         ).also {
             var index = 0
             it.putValueArgument(index ++, irConst(fieldNumber ++))
-            if (type.isNullable()) it.putValueArgument(index ++, irConst(fieldNumber ++))
+            if (nullable) it.putValueArgument(index ++, irConst(fieldNumber ++))
             it.putValueArgument(index, value())
         }
 
@@ -105,7 +84,7 @@ class ProtoMessageBuilderIrBuilder(
     fun instance(type: IrType, value: () -> IrExpression): Boolean? {
 
         val encoder = pluginContext.protoCache[type]?.symbol ?: return null
-        val buildFun = if (type.isNullable()) pluginContext.protoBuilderInstanceOrNull else pluginContext.protoBuilderInstance
+        val buildFun = if (type.isNullable()) protoCache.protoInstance.encodeOrNull else protoCache.protoInstance.encode
 
         encode(type, value, encoder, buildFun)
 
@@ -119,7 +98,7 @@ class ProtoMessageBuilderIrBuilder(
         val itemType = (type as IrSimpleTypeImpl).arguments.first() as IrType
 
         val encoder = pluginContext.protoCache[itemType]?.symbol ?: return null
-        val buildFun = if (type.isNullable()) pluginContext.protoBuilderInstanceListOrNull else pluginContext.protoBuilderInstanceList
+        val buildFun = if (type.isNullable()) protoCache.protoInstance.encodeListOrNull else protoCache.protoInstance.encodeList
 
         encode(type, value, encoder, buildFun)
 

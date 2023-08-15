@@ -4,7 +4,6 @@
 package hu.simplexion.z2.service.kotlin.ir.proto
 
 import hu.simplexion.z2.service.kotlin.ir.ServicePluginContext
-import hu.simplexion.z2.service.kotlin.ir.util.ProtoCache
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid

@@ -208,6 +208,7 @@ class ProviderClassTransform(
             dispatchReceiver = irGet(dispatch.dispatchReceiverParameter!!)
         ).also {
             val valueParameters = serviceFunction.valueParameters
+            val builder = ProtoMessageIrBuilder(pluginContext) { irGet(dispatch.valueParameters[DISPATCH_PAYLOAD_INDEX]) }
 
             for (index in 0 until valueParameters.size - 1) { // last parameter is the context
                 val valueParameter = valueParameters[index]
@@ -215,10 +216,7 @@ class ProviderClassTransform(
                 it.putValueArgument(
                     index,
                     requireNotNull(
-                        ProtoMessageIrBuilder(
-                            pluginContext,
-                            irGet(dispatch.valueParameters[DISPATCH_PAYLOAD_INDEX])
-                        ).get(valueParameter)
+                        builder.get(valueParameter)
                     ) { "unsupported type argument type: ${valueParameter.symbol}" }
                 )
             }
