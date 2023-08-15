@@ -71,10 +71,11 @@ class ProtoCache(
     }
 
     val protoOneUnit = with(pluginContext) { PROTO_ONE_UNIT.runtimeClass(PROTO_PACKAGE) }
+    val protoInt = builtIn("Int")
 
     val protoPrimitives = mapOf(
         IdSignatureValues._boolean to builtIn("Boolean"),
-        IdSignatureValues._int to builtIn("Int"),
+        IdSignatureValues._int to protoInt,
         IdSignatureValues._long to builtIn("Long"),
         getPublicSignature(StandardNames.BUILT_INS_PACKAGE_FQ_NAME, "String") to builtIn("String"),
         getPublicSignature(StandardNames.BUILT_INS_PACKAGE_FQ_NAME, "ByteArray") to builtIn("ByteArray"),

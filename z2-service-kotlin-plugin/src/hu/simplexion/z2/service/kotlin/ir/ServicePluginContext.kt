@@ -4,6 +4,7 @@
 package hu.simplexion.z2.service.kotlin.ir
 
 import hu.simplexion.z2.service.kotlin.ir.proto.ProtoCache
+import hu.simplexion.z2.service.kotlin.ir.proto.ProtoEnum
 import hu.simplexion.z2.service.kotlin.ir.util.ConsumerCache
 import hu.simplexion.z2.service.kotlin.ir.util.ServiceFunctionCache
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
@@ -48,6 +49,7 @@ class ServicePluginContext(
 
     val serviceFunctionCache = ServiceFunctionCache()
     val protoCache = ProtoCache(this)
+    val protoEnum = ProtoEnum(this)
     val consumerCache = ConsumerCache(this)
 
     fun String.runtimeClass(pkg: String = RUNTIME_PACKAGE) =

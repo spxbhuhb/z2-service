@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.types.isNullable
+import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.util.SYNTHETIC_OFFSET
 
 class ProtoMessageBuilderIrBuilder(
@@ -23,6 +24,7 @@ class ProtoMessageBuilderIrBuilder(
     var fieldNumber = 1
 
     val protoCache = pluginContext.protoCache
+    val protoEnum = pluginContext.protoEnum
 
     var current: IrExpression = start ?: IrConstructorCallImpl(
         SYNTHETIC_OFFSET, SYNTHETIC_OFFSET,
@@ -39,6 +41,8 @@ class ProtoMessageBuilderIrBuilder(
 
         primitive(type, value)?.let { return current }
         primitiveList(type, value)?.let { return current }
+        enum(type, value)?.let { return current }
+        enumList(type, value)?.let { return current }
         instance(type, value)?.let { return current }
         instanceList(type, value)?.let { return current }
 
@@ -116,5 +120,53 @@ class ProtoMessageBuilderIrBuilder(
             it.putValueArgument(index ++, irGetObject(encoder))
             it.putValueArgument(index, value())
         }
+    }
+
+    fun enum(type : IrType, value: () -> IrExpression) : Boolean? {
+        if (!type.isSubtypeOfClass(protoEnum.enumClass)) return null
+
+        val nullable = type.isNullable()
+
+        current = irCall(
+            if (nullable) protoCache.protoInt.encodeOrNull else protoCache.protoInt.encode,
+            dispatchReceiver = current
+        ).also {
+            var index = 0
+            it.putValueArgument(index ++, irConst(fieldNumber ++))
+            if (nullable) it.putValueArgument(index ++, irConst(fieldNumber ++))
+            it.putValueArgument(index,
+                irCall(
+                    protoEnum.enumOrNullToOrdinal,
+                ).also { c ->
+                    c.putValueArgument(0, value())
+                }
+            )
+        }
+
+        return true
+    }
+
+    fun enumList(type : IrType, value: () -> IrExpression) : Boolean? {
+        type.enumListType(protoEnum) ?: return null
+
+        val nullable = type.isNullable()
+
+        current = irCall(
+            if (nullable) protoCache.protoInt.encodeListOrNull else protoCache.protoInt.encodeList,
+            dispatchReceiver = current
+        ).also {
+            var index = 0
+            it.putValueArgument(index ++, irConst(fieldNumber ++))
+            if (nullable) it.putValueArgument(index ++, irConst(fieldNumber ++))
+            it.putValueArgument(index,
+                irCall(
+                    if (nullable) protoEnum.enumListOrNullToOrdinals else protoEnum.enumListToOrdinals
+                ).also { c ->
+                    c.putValueArgument(0, value())
+                }
+            )
+        }
+
+        return true
     }
 }

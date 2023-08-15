@@ -1,6 +1,7 @@
 package hu.simplexion.z2.service.kotlin.ir.util
 
 import hu.simplexion.z2.service.kotlin.ir.ServicePluginContext
+import hu.simplexion.z2.service.kotlin.ir.proto.ProtoEnum
 import org.jetbrains.kotlin.backend.common.ir.addDispatchReceiver
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
@@ -104,7 +105,7 @@ interface IrBuilder {
             }
 
             it.body = DeclarationIrBuilder(irContext, this.symbol).irBlockBody {
-                +irSetField(
+                + irSetField(
                     receiver = irGet(receiver),
                     field = irField,
                     value = irGet(value)
@@ -116,7 +117,7 @@ interface IrBuilder {
     fun IrProperty.irSetField(value: IrExpression, receiver: IrExpression): IrSetFieldImpl {
         return IrSetFieldImpl(
             SYNTHETIC_OFFSET, SYNTHETIC_OFFSET,
-            backingField!!.symbol,
+            backingField !!.symbol,
             receiver,
             value,
             irBuiltIns.unitType
@@ -126,8 +127,8 @@ interface IrBuilder {
     fun irGetValue(irProperty: IrProperty, receiver: IrExpression?): IrCall =
         IrCallImpl(
             SYNTHETIC_OFFSET, SYNTHETIC_OFFSET,
-            irProperty.backingField!!.type,
-            irProperty.getter!!.symbol,
+            irProperty.backingField !!.type,
+            irProperty.getter !!.symbol,
             0, 0,
             origin = IrStatementOrigin.GET_PROPERTY
         ).apply {
@@ -137,8 +138,8 @@ interface IrBuilder {
     fun irSetValue(irProperty: IrProperty, value: IrExpression, receiver: IrExpression?): IrCall =
         IrCallImpl(
             SYNTHETIC_OFFSET, SYNTHETIC_OFFSET,
-            irProperty.backingField!!.type,
-            irProperty.setter!!.symbol,
+            irProperty.backingField !!.type,
+            irProperty.setter !!.symbol,
             0, 1
         ).apply {
             dispatchReceiver = receiver
@@ -347,6 +348,13 @@ interface IrBuilder {
 
     val IrType.isList
         get() = isSubtypeOfClass(pluginContext.listClass)
+
+    fun IrType.enumListType(protoEnum: ProtoEnum): IrType? {
+        if (! this.isList) return null
+        val itemType = (this as IrSimpleTypeImpl).arguments.first() as IrType
+        if (!itemType.isSubtypeOfClass(protoEnum.enumClass)) return null
+        return itemType
+    }
 
     fun <T> IrType.ifBoolean(result: () -> T): T? =
         if (isBoolean()) result() else null

@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
+import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 
 // TODO cache signatures
 /**
@@ -30,6 +31,8 @@ class FunctionSignature(
     fun IrType.signature(): String {
         primitive(this)?.let { return it }
         primitiveList(this)?.let { return it }
+        enum(this)?.let { return it }
+        enumList(this)?.let { return it }
         instance(this)?.let { return it }
         instanceList(this)?.let { return it }
         return SIGNATURE_UNKNOWN
@@ -74,6 +77,22 @@ class FunctionSignature(
 
         // FIXME hackish list item type retrieval
         val itemType = (type as IrSimpleTypeImpl).arguments.first() as IrType
+
+        return "${SIGNATURE_LIST}${itemType.signature()}"
+    }
+
+
+    fun enum(type: IrType): String? {
+        if (! type.isSubtypeOfClass(pluginContext.protoEnum.enumClass)) return null
+        return "${SIGNATURE_INSTANCE}${type.classFqName?.asString()}${SIGNATURE_DELIMITER}"
+    }
+
+    fun enumList(type: IrType): String? {
+        if (!type.isList) return null
+
+        // FIXME hackish list item type retrieval
+        val itemType = (type as IrSimpleTypeImpl).arguments.first() as IrType
+        if (! itemType.isSubtypeOfClass(pluginContext.protoEnum.enumClass)) return null
 
         return "${SIGNATURE_LIST}${itemType.signature()}"
     }

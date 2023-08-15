@@ -2,13 +2,17 @@ package hu.simplexion.z2.service.kotlin.ir.proto
 
 import hu.simplexion.z2.service.kotlin.ir.ServicePluginContext
 import hu.simplexion.z2.service.kotlin.ir.util.IrBuilder
+import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrValueParameter
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.classifierOrNull
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.types.isNullable
+import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
+import org.jetbrains.kotlin.ir.util.getPropertyGetter
 
 class ProtoMessageIrBuilder(
     override val pluginContext: ServicePluginContext,
@@ -20,10 +24,13 @@ class ProtoMessageIrBuilder(
     var fieldNumber = 1
 
     val protoCache = pluginContext.protoCache
+    val protoEnum = pluginContext.protoEnum
 
     fun get(valueParameter: IrValueParameter): IrExpression? {
         primitive(valueParameter)?.let { return current }
         primitiveList(valueParameter)?.let { return current }
+        enum(valueParameter.type)?.let { return current }
+        enumList(valueParameter.type)?.let { return current }
         instance(valueParameter)?.let { return current }
         instanceList(valueParameter)?.let { return current }
         return null
@@ -99,5 +106,55 @@ class ProtoMessageIrBuilder(
             if (valueParameter.type.isNullable()) it.putValueArgument(index ++, irConst(fieldNumber ++))
             it.putValueArgument(index, irGetObject(encoder))
         }
+    }
+
+    fun enum(type: IrType): Boolean? {
+        if (! type.isSubtypeOfClass(protoEnum.enumClass)) return null
+        val entriesGetter = (type.classifierOrNull?.owner as? IrClass)?.getPropertyGetter("entries") ?: return null
+        val nullable = type.isNullable()
+
+        current = irCall(
+            if (nullable) protoEnum.ordinalOrNullToEnum else protoEnum.ordinalToEnum
+        ).also {
+            it.putTypeArgument(0, type)
+            it.putValueArgument(0, irCall(entriesGetter))
+            it.putValueArgument(1,
+                irCall(
+                    if (nullable) protoCache.protoInt.decodeOrNull else protoCache.protoInt.decode,
+                    dispatchReceiver = dispatchReceiver()
+                ).also { c ->
+                    var index = 0
+                    c.putValueArgument(index ++, irConst(fieldNumber ++))
+                    if (nullable) c.putValueArgument(index, irConst(fieldNumber ++))
+                }
+            )
+        }
+
+        return true
+    }
+
+    fun enumList(type: IrType): Boolean? {
+        val itemType = type.enumListType(protoEnum) ?: return null
+        val entriesGetter = (itemType.classifierOrNull?.owner as? IrClass)?.getPropertyGetter("entries") ?: return null
+        val nullable = type.isNullable()
+
+        current = irCall(
+            if (nullable) protoEnum.ordinalListOrNullToEnum else protoEnum.ordinalListToEnum
+        ).also {
+            it.putTypeArgument(0, itemType)
+            it.putValueArgument(0, irCall(entriesGetter))
+            it.putValueArgument(1,
+                irCall(
+                    if (nullable) protoCache.protoInt.decodeListOrNull else protoCache.protoInt.decodeList,
+                    dispatchReceiver = dispatchReceiver()
+                ).also { c ->
+                    var index = 0
+                    c.putValueArgument(index ++, irConst(fieldNumber ++))
+                    if (nullable) c.putValueArgument(index, irConst(fieldNumber ++))
+                }
+            )
+        }
+
+        return true
     }
 }
