@@ -18,7 +18,7 @@ The library has a runtime part and a Kotlin compiler plugin that transforms the 
 
 ## Getting started
 
-* [Overview](#overview)
+* [Overview](#Overview)
 * [Gradle Setup](#gradle-setup)
 * [Example Project](https://github.com/spxbhuhb/z2-service-example)
 
@@ -216,7 +216,7 @@ Services support the following data types as function parameters and return valu
 
 ### Nulls
 
-`null`s are supported for simple and composite types, except nullable items in lists (the lists
+`null`s are supported as parameter and/or return values, except nullable items in lists (the lists
 themselves can be null).
 
 While I can imagine proper use cases for nullable list items it would require considerable
@@ -224,6 +224,7 @@ effort to support them. I might add it when the need arises, but it's not planne
 
 ### Simple Types
 
+* `Unit`
 * `Boolean`
 * `Int`
 * `Long`
@@ -234,6 +235,10 @@ effort to support them. I might add it when the need arises, but it's not planne
 * `LocalDate` (from `kotlinx.datetime`)
 * `LocalDateTime` (from `kotlinx.datetime`)
 * `UUID` (from Z2 Commons)
+
+### Enum Classes
+
+All enum classes work out-of-the box, no modifications needed.
 
 ### Composite Types
 
@@ -253,7 +258,7 @@ Gradle plugin dependency (build.gradle.kts):
 
 ```kotlin
 plugin {
-    id("hu.simplexion.z2.service") version "2023.7.28"
+    id("hu.simplexion.z2.service") version "2023.8.15"
 }
 ```
 
@@ -262,7 +267,7 @@ Runtime dependency (build.gradle.kts):
 ```kotlin
 val commonMain by getting {
     dependencies {
-        implementation("hu.simplexion.z2:z2-service-runtime:2023.7.28")
+        implementation("hu.simplexion.z2:z2-service-runtime:2023.8.15")
     }
 }
 ```
@@ -270,7 +275,7 @@ val commonMain by getting {
 For Ktor transport and dispatcher: 
 
 ```kotlin
-implementation("hu.simplexion.z2:z2-service-ktor:2023.7.28")
+implementation("hu.simplexion.z2:z2-service-ktor:2023.8.15")
 ```
 
 ## A Kind of Magic
