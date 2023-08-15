@@ -3,7 +3,7 @@
  */
 package hu.simplexion.z2.service.gradle
 
-const val PLUGIN_VERSION = "2023.8.6-SNAPSHOT"
+const val PLUGIN_VERSION = "2023.8.15"
 
 // this is how the compiler identifies the plugin
 const val KOTLIN_COMPILER_PLUGIN_ID = "z2-service"

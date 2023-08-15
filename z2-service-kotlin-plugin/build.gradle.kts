@@ -14,7 +14,7 @@ group = "hu.simplexion.z2"
 val scmPath = "spxbhuhb/z2-service"
 
 val kotlin_version: String by project.properties
-val z2_version: String by project.properties
+val z2_commons_version: String by project.properties
 
 repositories {
     mavenLocal()
@@ -52,7 +52,7 @@ dependencies {
     testImplementation("org.junit.platform:junit-platform-launcher")
     testImplementation("org.junit.platform:junit-platform-runner")
     testImplementation("org.junit.platform:junit-platform-suite-api")
-    testImplementation("hu.simplexion.z2:z2-commons:${z2_version}")
+    testImplementation("hu.simplexion.z2:z2-commons:${z2_commons_version}")
 }
 
 tasks.test {
