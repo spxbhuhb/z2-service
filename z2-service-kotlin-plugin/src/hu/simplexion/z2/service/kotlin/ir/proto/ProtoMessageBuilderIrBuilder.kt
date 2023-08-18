@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
+import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
@@ -52,17 +53,8 @@ class ProtoMessageBuilderIrBuilder(
 
     fun primitive(type: IrType, value: () -> IrExpression): Boolean? {
         val builtInEntry = protoCache.primitive(type) ?: return null
-        val nullable = type.isNullable()
 
-        current = irCall(
-            if (nullable) builtInEntry.encodeOrNull else builtInEntry.encode,
-            dispatchReceiver = current
-        ).also {
-            var index = 0
-            it.putValueArgument(index ++, irConst(fieldNumber ++))
-            if (nullable) it.putValueArgument(index ++, irConst(fieldNumber ++))
-            it.putValueArgument(index, value())
-        }
+        primitiveCall(type.isNullable(), value, builtInEntry.encode, builtInEntry.encodeOrNull)
 
         return true
     }
@@ -70,10 +62,15 @@ class ProtoMessageBuilderIrBuilder(
     fun primitiveList(type: IrType, value: () -> IrExpression): Boolean? {
 
         val builtInEntry = protoCache.list(type) ?: return null
-        val nullable = type.isNullable()
 
+        primitiveCall(type.isNullable(), value, builtInEntry.encodeList, builtInEntry.encodeListOrNull)
+
+        return true
+    }
+
+    fun primitiveCall(nullable: Boolean, value: () -> IrExpression, encodeFun: IrSimpleFunctionSymbol, encodeNullFun: IrSimpleFunctionSymbol) {
         current = irCall(
-            if (nullable) builtInEntry.encodeListOrNull else builtInEntry.encodeList,
+            if (nullable) encodeNullFun else encodeFun,
             dispatchReceiver = current
         ).also {
             var index = 0
@@ -81,8 +78,6 @@ class ProtoMessageBuilderIrBuilder(
             if (nullable) it.putValueArgument(index ++, irConst(fieldNumber ++))
             it.putValueArgument(index, value())
         }
-
-        return true
     }
 
     fun instance(type: IrType, value: () -> IrExpression): Boolean? {
@@ -122,8 +117,8 @@ class ProtoMessageBuilderIrBuilder(
         }
     }
 
-    fun enum(type : IrType, value: () -> IrExpression) : Boolean? {
-        if (!type.isSubtypeOfClass(protoEnum.enumClass)) return null
+    fun enum(type: IrType, value: () -> IrExpression): Boolean? {
+        if (! type.isSubtypeOfClass(protoEnum.enumClass)) return null
 
         val nullable = type.isNullable()
 
@@ -146,7 +141,7 @@ class ProtoMessageBuilderIrBuilder(
         return true
     }
 
-    fun enumList(type : IrType, value: () -> IrExpression) : Boolean? {
+    fun enumList(type: IrType, value: () -> IrExpression): Boolean? {
         type.enumListType(protoEnum) ?: return null
 
         val nullable = type.isNullable()

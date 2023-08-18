@@ -25,10 +25,11 @@ fun box(): String {
         defaultServiceCallTransport = DumpTransport()
         defaultServiceProviderRegistry += BasicServiceProvider()
 
-        //val b = getService<BasicService>()
-        val b = BasicServiceProvider()
+        val b1 = getService<BasicService>()
+        val b2 = BasicServiceProvider()
 
-        if (b.a(12) != 13) return@runBlocking "Fail"
+        if (b1.a(12) != 13) return@runBlocking "Fail: through transport"
+        if (b2.a(12) != 13) return@runBlocking "Fail: direct"
     }
     return "OK"
 }

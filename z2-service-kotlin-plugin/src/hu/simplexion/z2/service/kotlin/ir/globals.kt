@@ -3,6 +3,8 @@
  */
 package hu.simplexion.z2.service.kotlin.ir
 
+import org.jetbrains.kotlin.name.FqName
+
 const val RUNTIME_PACKAGE = "hu.simplexion.z2.service.runtime"
 
 const val SERVICE_CLASS = "Service"
@@ -11,6 +13,8 @@ const val SERVICE_NAME_PROPERTY = "serviceName"
 const val CONSUMER_POSTFIX = "\$Consumer"
 const val SERVICE_PROVIDER_CLASS = "ServiceProvider"
 const val SERVICE_CONSUMER_CLASS = "ServiceConsumer"
+
+val SERVICE_PROVIDER_FQ_NAME = FqName("$RUNTIME_PACKAGE.$SERVICE_PROVIDER_CLASS")
 
 const val TRANSPORT_PACKAGE = "$RUNTIME_PACKAGE.transport"
 const val GLOBALS_CLASS = "GlobalsKt"

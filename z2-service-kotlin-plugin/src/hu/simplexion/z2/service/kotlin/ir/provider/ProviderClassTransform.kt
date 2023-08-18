@@ -197,7 +197,7 @@ class ProviderClassTransform(
                         ).next(
                             serviceFunction.function.returnType
                         ) { callServiceFunction(dispatch, serviceFunction.function) }
-                    ) { "unsupported type return type: ${serviceFunction.function.symbol}" }
+                    ) { "unsupported return type: ${serviceFunction.function.symbol}" }
                 )
             }
         )

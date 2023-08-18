@@ -8,7 +8,6 @@ import hu.simplexion.z2.service.kotlin.ir.proto.ProtoCompanionVisitor
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
-import org.jetbrains.kotlin.ir.util.dump
 
 internal class ServiceGenerationExtension : IrGenerationExtension {
 
@@ -16,15 +15,15 @@ internal class ServiceGenerationExtension : IrGenerationExtension {
 
         ServicePluginContext(pluginContext).apply {
 
-            debug("service") { "====  START  ==".padEnd(80, '=') }
+//            debug("service") { "====  START  ==".padEnd(80, '=') }
 
             // order is important here
             moduleFragment.accept(ProtoCompanionVisitor(this, protoCache), null)
             moduleFragment.accept(ServiceModuleTransform(this), null)
             moduleFragment.accept(GetConsumerTransform(this), null)
 
-            debug("service") { moduleFragment.dump() }
-            debug("service") { "====  END  ====".padEnd(80, '=') }
+//            debug("service") { moduleFragment.dump() }
+//            debug("service") { "====  END  ====".padEnd(80, '=') }
         }
     }
 }

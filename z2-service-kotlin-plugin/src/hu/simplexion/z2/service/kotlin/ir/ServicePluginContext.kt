@@ -59,7 +59,7 @@ class ServicePluginContext(
 
     @Suppress("UNUSED_PARAMETER")
     fun debug(label : String, message : () -> Any?) {
-//        val paddedLabel = "[$label]".padEnd(20)
+//        val paddedLabel = "[$label]".padEnd(30)
 //        Files.write(Paths.get("/Users/tiz/Desktop/plugin.txt"), "$paddedLabel  ${message()}\n".encodeToByteArray(), StandardOpenOption.APPEND, StandardOpenOption.CREATE)
     }
 }

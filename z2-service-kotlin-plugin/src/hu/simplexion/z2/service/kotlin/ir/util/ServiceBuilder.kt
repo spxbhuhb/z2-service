@@ -1,5 +1,6 @@
 package hu.simplexion.z2.service.kotlin.ir.util
 
+import hu.simplexion.z2.service.kotlin.ir.SERVICE_PROVIDER_FQ_NAME
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
@@ -19,7 +20,7 @@ interface ServiceBuilder : IrBuilder {
 
     fun collectServiceFunctions(klass : IrClass) {
         for (superType in klass.superTypes) {
-            if (superType.isSubtypeOfClass(pluginContext.serviceClass)) {
+            if (superType.isSubtypeOfClass(pluginContext.serviceClass) && superType.classFqName != SERVICE_PROVIDER_FQ_NAME) {
                 serviceNames += superType.classFqName!!.asString()
                 serviceFunctions += pluginContext.serviceFunctionCache[superType]
             }

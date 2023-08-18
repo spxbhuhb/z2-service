@@ -2,16 +2,12 @@ package hu.simplexion.z2.service.kotlin.ir.proto
 
 import hu.simplexion.z2.service.kotlin.ir.*
 import org.jetbrains.kotlin.backend.jvm.functionByName
-import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
-import org.jetbrains.kotlin.ir.util.companionObject
-import org.jetbrains.kotlin.ir.util.constructors
-import org.jetbrains.kotlin.ir.util.defaultType
-import org.jetbrains.kotlin.ir.util.isSubclassOf
+import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -74,14 +70,14 @@ class ProtoCache(
     val protoInt = builtIn("Int")
 
     val protoPrimitives = mapOf(
-        IdSignatureValues._boolean to builtIn("Boolean"),
-        IdSignatureValues._int to protoInt,
-        IdSignatureValues._long to builtIn("Long"),
-        getPublicSignature(StandardNames.BUILT_INS_PACKAGE_FQ_NAME, "String") to builtIn("String"),
-        getPublicSignature(StandardNames.BUILT_INS_PACKAGE_FQ_NAME, "ByteArray") to builtIn("ByteArray"),
+        "kotlin.Boolean" to builtIn("Boolean"),
+        "kotlin.Int" to protoInt,
+        "kotlin.Long" to builtIn("Long"),
+        "kotlin.String" to builtIn("String"),
+        "kotlin.ByteArray" to builtIn("ByteArray"),
+        "hu.simplexion.z2.commons.util.UUID" to builtIn("Uuid")
     )
 
-    val protoUuid = builtIn("Uuid")
     val protoInstance = builtIn("Instance")
 
     val protoOneInstanceConstructor = protoInstance.one.constructors.first()
@@ -97,9 +93,8 @@ class ProtoCache(
     )
 
     fun primitive(type: IrType): BuiltinEntry? {
-        if (type.isSubtypeOfClass(pluginContext.uuidType)) return protoUuid
-        val classifier = type.classifierOrNull ?: return null
-        return protoPrimitives[classifier.signature]
+        val fqName = (type.classifierOrNull as? IrClassSymbol)?.owner?.fqNameWhenAvailable ?: return null
+        return protoPrimitives[fqName.asString()]
     }
 
     fun list(type: IrType): BuiltinEntry? {

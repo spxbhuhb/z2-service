@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrGetFieldImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrSetFieldImpl
 import org.jetbrains.kotlin.ir.util.defaultType
+import org.jetbrains.kotlin.ir.util.kotlinFqName
 
 class ServiceNamePropertyTransform(
     override val pluginContext: ServicePluginContext,
@@ -29,8 +30,10 @@ class ServiceNamePropertyTransform(
     fun build() {
         if (! property.isFakeOverride) return
 
-        require(serviceBuilder.serviceNames.isNotEmpty()) { "missing service interface (probably ': Service' is missing)" }
-        require(serviceBuilder.serviceNames.size != 1) { "you have to set `serviceName` manually when more than one service is implemented" }
+        require(serviceBuilder.serviceNames.isNotEmpty()) { "${transformedClass.kotlinFqName} missing service interface (probably ': Service' is missing)" }
+        require(serviceBuilder.serviceNames.size == 1) {
+            "${transformedClass.kotlinFqName} you have to set `serviceName` manually when more than one service is implemented (${serviceBuilder.serviceNames.joinToString()})"
+        }
 
         property.isFakeOverride = false
         property.origin = IrDeclarationOrigin.DEFINED
