@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.declarations.*
 import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irGet
+import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.builders.irSetField
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
@@ -111,6 +112,30 @@ interface IrBuilder {
                     value = irGet(value)
                 )
             }
+        }
+    }
+
+    fun transformGetter(irClass : IrClass, getter: IrSimpleFunction, field: IrField) {
+        getter.origin = IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
+        getter.isFakeOverride = false
+
+        getter.addDispatchReceiver {
+            type = irClass.defaultType
+        }
+
+        getter.body = DeclarationIrBuilder(irContext, getter.symbol).irBlockBody {
+            + irReturn(
+                IrGetFieldImpl(
+                    UNDEFINED_OFFSET, UNDEFINED_OFFSET,
+                    field.symbol,
+                    field.type,
+                    IrGetValueImpl(
+                        UNDEFINED_OFFSET, UNDEFINED_OFFSET,
+                        getter.dispatchReceiverParameter !!.type,
+                        getter.dispatchReceiverParameter !!.symbol
+                    )
+                )
+            )
         }
     }
 

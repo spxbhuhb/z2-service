@@ -54,7 +54,7 @@ interface IrClassBaseBuilder : IrBuilder {
             klass.thisReceiver = it
         }
 
-    private fun constructor(klass: IrClass): IrConstructor =
+    fun constructor(klass: IrClass): IrConstructor =
 
         klass.addConstructor {
             isPrimary = true

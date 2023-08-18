@@ -4,7 +4,7 @@
 package hu.simplexion.z2.service.kotlin.ir
 
 import hu.simplexion.z2.service.kotlin.ir.consumer.ConsumerClassBuilder
-import hu.simplexion.z2.service.kotlin.ir.provider.ProviderClassTransform
+import hu.simplexion.z2.service.kotlin.ir.impl.ImplClassTransform
 import org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.declarations.IrClass
@@ -20,8 +20,8 @@ class ServiceModuleTransform(
             return declaration
         }
 
-        if (declaration.superTypes.contains(pluginContext.serviceProviderType)) {
-            return declaration.accept(ProviderClassTransform(pluginContext), null) as IrStatement
+        if (declaration.superTypes.contains(pluginContext.serviceImplType)) {
+            return declaration.accept(ImplClassTransform(pluginContext), null) as IrStatement
         }
 
         return declaration

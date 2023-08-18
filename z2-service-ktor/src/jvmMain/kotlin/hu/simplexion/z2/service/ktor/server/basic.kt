@@ -3,7 +3,7 @@ package hu.simplexion.z2.service.ktor.server
 import hu.simplexion.z2.commons.protobuf.ProtoMessage
 import hu.simplexion.z2.commons.protobuf.ProtoMessageBuilder
 import hu.simplexion.z2.service.runtime.BasicServiceContext
-import hu.simplexion.z2.service.runtime.defaultServiceProviderRegistry
+import hu.simplexion.z2.service.runtime.defaultServiceImplFactory
 import hu.simplexion.z2.service.runtime.transport.RequestEnvelope
 import hu.simplexion.z2.service.runtime.transport.ResponseEnvelope
 import hu.simplexion.z2.service.runtime.transport.ServiceCallStatus
@@ -26,14 +26,13 @@ fun Routing.basicWebsocketServiceCallTransport(path: String = "/z2/service") {
 
                 val responseEnvelope = try {
 
-                    val service = requireNotNull(defaultServiceProviderRegistry[requestEnvelope.serviceName])
+                    val service = requireNotNull(defaultServiceImplFactory[requestEnvelope.serviceName, context])
 
                     val responseBuilder = ProtoMessageBuilder()
 
                     service.dispatch(
                         requestEnvelope.funName,
                         ProtoMessage(requestEnvelope.payload),
-                        context,
                         responseBuilder
                     )
 

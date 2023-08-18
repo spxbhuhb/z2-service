@@ -1,6 +1,6 @@
 package hu.simplexion.z2.service.kotlin.ir.util
 
-import hu.simplexion.z2.service.kotlin.ir.SERVICE_PROVIDER_FQ_NAME
+import hu.simplexion.z2.service.kotlin.ir.SERVICE_IMPL_FQ_NAME
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
@@ -14,15 +14,15 @@ interface ServiceBuilder : IrBuilder {
 
     var serviceNameGetter: IrSimpleFunctionSymbol
 
-    val serviceFunctions: MutableList<IrSimpleFunctionSymbol>
+    val overiddenServiceFunctions: MutableList<IrSimpleFunctionSymbol>
 
     val serviceNames : MutableList<String>
 
     fun collectServiceFunctions(klass : IrClass) {
         for (superType in klass.superTypes) {
-            if (superType.isSubtypeOfClass(pluginContext.serviceClass) && superType.classFqName != SERVICE_PROVIDER_FQ_NAME) {
+            if (superType.isSubtypeOfClass(pluginContext.serviceClass) && superType.classFqName != SERVICE_IMPL_FQ_NAME) {
                 serviceNames += superType.classFqName!!.asString()
-                serviceFunctions += pluginContext.serviceFunctionCache[superType]
+                overiddenServiceFunctions += pluginContext.serviceFunctionCache[superType]
             }
         }
     }
@@ -30,7 +30,7 @@ interface ServiceBuilder : IrBuilder {
     fun IrFunction.asServiceFun(): IrSimpleFunction? {
         if (this !is IrSimpleFunction) return null
         for (overriddenSymbol in this.overriddenSymbols) {
-            if (overriddenSymbol in serviceFunctions) return this
+            if (overriddenSymbol in overiddenServiceFunctions) return this
         }
         return null
     }

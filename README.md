@@ -36,7 +36,7 @@ interface HelloService : Service {
 val hello = getService<HelloService>()
 
 // jvmMain - server
-class HelloServiceProvider : HelloService, ServiceProvider {
+class HelloServiceImpl : HelloService, ServiceImpl {
     override suspend fun hello(myName: String): String {
       return "Hello $myName!"
     }
@@ -44,7 +44,7 @@ class HelloServiceProvider : HelloService, ServiceProvider {
 
 // testing - this one for jvmMain
 fun main() {
-    defaultServiceProviderRegistry += HelloServiceProvider()
+    defaultServiceImplFactory += HelloServiceImpl()
     runBlocking {
         println(Hello.hello("World"))
     }
@@ -57,7 +57,7 @@ When using services we work with:
 
 * service definitions
 * service consumers
-* service providers
+* service implementations
 * service transports
 
 ### Service Definitions
@@ -95,12 +95,12 @@ fun main() {
 }
 ```
 
-### Service Providers
+### Service Implementations
 
-On the server side create a service provider that does whatever this service should do:
+On the server side create a service implementation that does whatever this service should do:
 
 ```kotlin
-class HelloServiceProvider : HelloService, ServiceProvider {
+class HelloServiceImpl : HelloService, ServiceImpl {
 
     override suspend fun hello(myName: String): String {
         return "Hello $myName!"
@@ -111,24 +111,50 @@ class HelloServiceProvider : HelloService, ServiceProvider {
 
 Register the service providers during application startup, so the server knows that they are available.
 
-Use [defaultServiceProviderRegistry](/z2-service-runtime/src/commonMain/kotlin/hu/simplexion/z2/service/runtime/globals.kt)
+Use [defaultServiceImplFactory](./z2-service-runtime/src/commonMain/kotlin/hu/simplexion/z2/service/runtime/globals.kt)
 for or implement your own way to store the services. These registries are used by the transports to find the service.
 
 ```kotlin
-defaultServiceProviderRegistry += HelloServiceProvider()
+defaultServiceImplFactory += HelloServiceImpl()
+```
+
+It is very important that a new service implementation instance is created for each service call. This might seem 
+a bit of an overkill, but it makes the handling of the [service context](#Service-Context) very straightforward.
+
+**IMPORTANT** This **DOES NOT WORK**. As each call gets a new instance `clicked` will be 0 all the time.
+
+```kotlin
+class ClickServiceImpl : ClickService, ServiceImpl {
+
+    val clicked = AtomicInteger(0)
+
+    override suspend fun click(): Int {
+      return clicked.incrementAndGet()
+    }
+}
+```
+
+Replace the code above with this, this works:
+
+```kotlin
+val clicked = AtomicInteger(0)
+
+class ClickServiceImpl : ClickService, ServiceImpl {
+    override suspend fun click(): Int {
+        return clicked.incrementAndGet()
+    }
+}
 ```
 
 #### Service Context
 
-Most cases you need authorization on the server side. Services provide a `serviceContext`.
+Most cases you need authorization and session data on the server side. Services provide a `serviceContext`.
 This context may contain the identity of the user, along with other information.
 
-You can use `serviceContext` only directly inside the service functions. All other uses throw an exception.
-
-**NOTE** the basic Ktor web socket dispatcher does not handle the context yet, you'll get an empty one each call
+Each service implementation call gets the service context which is reachable in the `serviceContext` property:
 
 ```kotlin
-class HelloServiceProvider : HelloService, ServiceProvider {
+class HelloServiceImpl : HelloService, ServiceImpl {
 
     override suspend fun hello(myName: String): String {
         if (serviceContext.isAnonymous) {
@@ -202,7 +228,7 @@ fun Application.module() {
         masking = false
     }
 
-    defaultServiceProviderRegistry += HelloServiceProvider()
+    defaultServiceImplFactory += HelloServiceImpl()
 
     routing {
         basicWebsocketServiceCallTransport("/z2/services")
@@ -258,7 +284,7 @@ Gradle plugin dependency (build.gradle.kts):
 
 ```kotlin
 plugin {
-    id("hu.simplexion.z2.service") version "2023.8.15"
+    id("hu.simplexion.z2.service") version "<z2-service-version>"
 }
 ```
 
@@ -267,7 +293,7 @@ Runtime dependency (build.gradle.kts):
 ```kotlin
 val commonMain by getting {
     dependencies {
-        implementation("hu.simplexion.z2:z2-service-runtime:2023.8.15")
+        implementation("hu.simplexion.z2:z2-service-runtime:${z2_service_version}")
     }
 }
 ```
@@ -275,7 +301,7 @@ val commonMain by getting {
 For Ktor transport and dispatcher: 
 
 ```kotlin
-implementation("hu.simplexion.z2:z2-service-ktor:2023.8.15")
+implementation("hu.simplexion.z2:z2-service-ktor:${z2_service_version}")
 ```
 
 ## A Kind of Magic
@@ -323,17 +349,12 @@ val hello = getService<Hello>(Hello$Consumer())
 
 The server side transform is a bit trickier, mostly because we need information for authorization.
 
-When a class implements the `ServiceProvider` interface, the plugin:
+When a class implements `ServiceImpl`, the plugin:
 
-* for each original service function (the ones you write)
-  * removes the `override` modifier
-  * adds a `serviceContext` argument
-  * replaces all `ServiceProvider.serviceContext` property accesses to access the parameter added above 
-  * creates a new function
-    * with the same name and arguments
-    * without the `serviceContext` parameter
-    * adds the `override` modifier to this new function
 * adds a `dispatch` function that handles dispatch of the incoming calls
+* adds a `newInstance` function that creates a new instance of the implementation
+* adds a new constructor with the service context as a parameter
+* replaces the code of the original constructor, so it calls the new one with `null` as service context
 
 ```kotlin
 package hu.simplexion.z2.service.runtime
@@ -341,101 +362,25 @@ package hu.simplexion.z2.service.runtime
 import hu.simplexion.z2.commons.protobuf.ProtoMessage
 import hu.simplexion.z2.commons.protobuf.ProtoMessageBuilder
 import hu.simplexion.z2.service.runtime.ServiceContext
-import hu.simplexion.z2.service.runtime.ServiceProvider
+import hu.simplexion.z2.service.runtime.ServiceImpl
 
-class TestServiceProvider : TestService, ServiceProvider {
+class TestServiceImpl : TestService, ServiceImpl {
 
     override suspend fun dispatch(
         funName: String,
         payload: ProtoMessage,
-        context: ServiceContext,
         response : ProtoMessageBuilder
     ) {
         when (funName) {
-            "testFun" -> response.string(1, testFun(payload.int(1), payload.string(2), context))
+            "testFun" -> response.string(1, testFun(payload.int(1), payload.string(2)))
             else -> throw IllegalStateException("unknown function: $funName")
         }
     }
 
-    suspend fun testFun(arg1: Int, arg2: String, serviceContext : ServiceContext?): String {
+    suspend fun testFun(arg1: Int, arg2: String): String {
         return "i:$arg1 s:$arg2 $serviceContext"
     }
 
-    override suspend fun testFun(arg1: Int, arg2: String) =
-        testFun(arg1, arg2, null)
-
-}
-```
-
-### Considerations
-
-There are other possible solutions for passing the context.
-
-ThreadLocal would be able to pass the information. However, I felt that it would be really dangerous. The
-main purpose of the context is authorization. I don't know how to make it sure that TreadLocal is properly
-cleared all the time. Also, it would make elevation much-much harder (if we decide to implement it).
-
-Adding a parameter to the function would also work. That parameter would be meaningless on the
-client side and introduce visual clutter/boilerplate. That's exactly what I wanted to avoid.
-
-Other possibility would be to use different definitions for the consumer and the provider. While that
-would work, there would be no easy way to make sure that the definitions are aligned. Also, code 
-analysis tools wouldn't realize that the two sides belong to each other.
-
-When looking from application programming point of view, the current solution is the most comfortable
-one, therefore that's the one implemented.
-
-### Wire Formats
-
-Both request and response use an envelope to encapsulate the metadata needed for routing.
-
-#### Request
-
-```protobuf
-message ServiceCallRequestEnvelope {
-    string id = 1;
-    string serviceName = 2;
-    string funName = 3;
-    bytes payload = 4;
-}
-```
-
-The payload contains the arguments of the call. For example:
-
-```protobuf
-message HelloRequestPayload {
-    string myName = 1;
-    string from = 2;
-}
-```
-
-#### Response 
-
-```protobuf
-message ResponseEnvelope {
-    string id = 1;
-    int32 responseCode = 2;
-    bytes payload = 3;
-}
-```
-
-When there is no return value, the response payload is omitted.
-
-When the return value is a primitive type, the field number is always `1`:
-
-```protobuf
-message HelloResponsePayload {
-    string value = 1;
-}
-```
-
-When the return value is a complex type, the field numbers are assigned by the encoder of the type:
-
-```protobuf
-message ComplexResponsePayload {
-    string field1 = 1;
-    int field2 = 2;
-    OtherComplexType field3 = 3;
 }
 ```
 

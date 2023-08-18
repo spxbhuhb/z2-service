@@ -57,7 +57,7 @@ fun box(): String {
 
     runBlocking {
         defaultServiceCallTransport = DumpTransport()
-        defaultServiceProviderRegistry += TypesServiceProvider()
+        defaultServiceImplFactory += TypesServiceImpl()
 
         // -- Boolean --
         if (typesServiceConsumer.testFun(booleanVal) != booleanVal) errors += "booleanValue"
@@ -222,7 +222,7 @@ interface TypesService : Service {
 
 val typesServiceConsumer = getService<TypesService>()
 
-class TypesServiceProvider : TypesService, ServiceProvider {
+class TypesServiceImpl : TypesService, ServiceImpl {
 
     override suspend fun testFun() = Unit
 
@@ -345,11 +345,11 @@ class DumpTransport : ServiceCallTransport {
         println(funName)
         println(payload.dumpProto())
 
-        val service = requireNotNull(defaultServiceProviderRegistry[serviceName])
+        val service = requireNotNull(defaultServiceImplFactory[serviceName, null])
 
         val responseBuilder = ProtoMessageBuilder()
 
-        service.dispatch(funName, ProtoMessage(payload), BasicServiceContext(), responseBuilder)
+        service.dispatch(funName, ProtoMessage(payload), responseBuilder)
 
         val responsePayload = responseBuilder.pack()
         println("==== RESPONSE ====")

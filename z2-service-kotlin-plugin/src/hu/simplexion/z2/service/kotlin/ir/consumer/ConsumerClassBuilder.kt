@@ -46,7 +46,7 @@ class ConsumerClassBuilder(
         interfaceClass.file.addChild(it)
     }
 
-    override val serviceFunctions = mutableListOf<IrSimpleFunctionSymbol>()
+    override val overiddenServiceFunctions = mutableListOf<IrSimpleFunctionSymbol>()
 
     override val serviceNames = mutableListOf<String>()
 
@@ -57,7 +57,7 @@ class ConsumerClassBuilder(
 
         addServiceNameProperty()
 
-        for (serviceFunction in serviceFunctions) {
+        for (serviceFunction in overiddenServiceFunctions) {
             addServiceFunction(serviceFunction.owner)
         }
 

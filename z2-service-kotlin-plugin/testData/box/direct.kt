@@ -12,7 +12,7 @@ interface BasicService : Service {
 
 val basicServiceConsumer = getService<BasicService>()
 
-class BasicServiceProvider : BasicService, ServiceProvider {
+class BasicServiceImpl : BasicService, ServiceImpl {
 
     override suspend fun a(arg1: Int): Int {
         return arg1 + 1
@@ -23,10 +23,10 @@ class BasicServiceProvider : BasicService, ServiceProvider {
 fun box(): String {
     runBlocking {
         defaultServiceCallTransport = DumpTransport()
-        defaultServiceProviderRegistry += BasicServiceProvider()
+        defaultServiceImplFactory += BasicServiceImpl()
 
         val b1 = getService<BasicService>()
-        val b2 = BasicServiceProvider()
+        val b2 = BasicServiceImpl()
 
         if (b1.a(12) != 13) return@runBlocking "Fail: through transport"
         if (b2.a(12) != 13) return@runBlocking "Fail: direct"
@@ -41,11 +41,11 @@ class DumpTransport : ServiceCallTransport {
         println(funName)
         println(payload.dumpProto())
 
-        val service = requireNotNull(defaultServiceProviderRegistry[serviceName])
+        val service = requireNotNull(defaultServiceImplFactory[serviceName, null])
 
         val responseBuilder = ProtoMessageBuilder()
 
-        service.dispatch(funName, ProtoMessage(payload), BasicServiceContext(), responseBuilder)
+        service.dispatch(funName, ProtoMessage(payload), responseBuilder)
 
         val responsePayload = responseBuilder.pack()
         println("==== RESPONSE ====")

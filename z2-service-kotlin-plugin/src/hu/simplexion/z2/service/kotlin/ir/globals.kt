@@ -11,15 +11,17 @@ const val SERVICE_CLASS = "Service"
 const val SERVICE_NAME_PROPERTY = "serviceName"
 
 const val CONSUMER_POSTFIX = "\$Consumer"
-const val SERVICE_PROVIDER_CLASS = "ServiceProvider"
+const val SERVICE_IMPL_CLASS = "ServiceImpl"
 const val SERVICE_CONSUMER_CLASS = "ServiceConsumer"
 
-val SERVICE_PROVIDER_FQ_NAME = FqName("$RUNTIME_PACKAGE.$SERVICE_PROVIDER_CLASS")
+val SERVICE_IMPL_FQ_NAME = FqName("$RUNTIME_PACKAGE.$SERVICE_IMPL_CLASS")
 
 const val TRANSPORT_PACKAGE = "$RUNTIME_PACKAGE.transport"
 const val GLOBALS_CLASS = "GlobalsKt"
 const val DEFAULT_SERVICE_CALL_TRANSPORT = "defaultServiceCallTransport"
 const val GET_SERVICE = "getService"
+const val SERVICE_IMPL_NEW_INSTANCE = "newInstance"
+
 
 val FUN_NAMES_TO_SKIP = listOf("service", "equals", "hashCode", "toString")
 const val SERVICE_CONTEXT_PROPERTY = "serviceContext"
@@ -29,8 +31,7 @@ const val SERVICE_CONTEXT_CLASS = "ServiceContext"
 const val DISPATCH_NAME = "dispatch"
 const val DISPATCH_FUN_NAME_INDEX = 0
 const val DISPATCH_PAYLOAD_INDEX = 1
-const val DISPATCH_CONTEXT_INDEX = 2
-const val DISPATCH_RESPONSE_INDEX = 3
+const val DISPATCH_RESPONSE_INDEX = 2
 
 const val SERVICE_CALL_TRANSPORT_CLASS = "ServiceCallTransport"
 const val CALL_FUNCTION = "call"

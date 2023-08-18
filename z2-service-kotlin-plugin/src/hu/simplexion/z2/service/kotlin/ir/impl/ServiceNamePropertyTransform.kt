@@ -1,7 +1,7 @@
 /*
  * Copyright © 2022-2023, Simplexion, Hungary and contributors. Use of this source code is governed by the Apache 2.0 license.
  */
-package hu.simplexion.z2.service.kotlin.ir.provider
+package hu.simplexion.z2.service.kotlin.ir.impl
 
 import hu.simplexion.z2.service.kotlin.ir.ServicePluginContext
 import hu.simplexion.z2.service.kotlin.ir.util.IrBuilder
@@ -49,32 +49,8 @@ class ServiceNamePropertyTransform(
             correspondingPropertySymbol = property.symbol
         }
 
-        transformGetter(property.getter!!, property.backingField!!)
+        transformGetter(transformedClass, property.getter!!, property.backingField!!)
         transformSetter(property.setter!!, property.backingField!!)
-    }
-
-    fun transformGetter(func: IrSimpleFunction, field: IrField) {
-        func.origin = IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
-        func.isFakeOverride = false
-
-        func.addDispatchReceiver {
-            type = transformedClass.defaultType
-        }
-
-        func.body = DeclarationIrBuilder(irContext, func.symbol).irBlockBody {
-            + irReturn(
-                IrGetFieldImpl(
-                    UNDEFINED_OFFSET, UNDEFINED_OFFSET,
-                    field.symbol,
-                    field.type,
-                    IrGetValueImpl(
-                        UNDEFINED_OFFSET, UNDEFINED_OFFSET,
-                        func.dispatchReceiverParameter !!.type,
-                        func.dispatchReceiverParameter !!.symbol
-                    )
-                )
-            )
-        }
     }
 
     fun transformSetter(func: IrSimpleFunction, field: IrField) {

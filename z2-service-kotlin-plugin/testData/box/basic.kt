@@ -1,9 +1,10 @@
 package foo.bar
 
-import hu.simplexion.z2.service.runtime.defaultServiceProviderRegistry
+import hu.simplexion.z2.service.runtime.defaultServiceImplFactory
 import hu.simplexion.z2.commons.protobuf.*
 import hu.simplexion.z2.commons.util.UUID
 import hu.simplexion.z2.service.runtime.*
+import hu.simplexion.z2.service.runtime.BasicServiceContext
 import hu.simplexion.z2.service.runtime.transport.ServiceCallTransport
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
@@ -21,7 +22,7 @@ interface TestService : Service {
 
 val testServiceConsumer = getService<TestService>()
 
-class TestServiceProvider : TestService, ServiceProvider {
+class TestServiceImpl : TestService, ServiceImpl {
 
     override suspend fun testFun(arg1: Int, arg2: String) =
         "i:$arg1 s:$arg2 $serviceContext"
@@ -31,7 +32,7 @@ class TestServiceProvider : TestService, ServiceProvider {
 fun box(): String {
     var response : String = ""
     runBlocking {
-        defaultServiceProviderRegistry += TestServiceProvider()
+        defaultServiceImplFactory += TestServiceImpl()
         defaultServiceCallTransport = DumpTransport()
         response = testServiceConsumer.testFun(1, "hello")
     }
@@ -45,11 +46,11 @@ class DumpTransport : ServiceCallTransport {
         println(funName)
         println(payload.dumpProto())
 
-        val service = requireNotNull(defaultServiceProviderRegistry[serviceName])
+        val service = requireNotNull(defaultServiceImplFactory[serviceName, BasicServiceContext()])
 
         val responseBuilder = ProtoMessageBuilder()
 
-        service.dispatch(funName, ProtoMessage(payload), BasicServiceContext(), responseBuilder)
+        service.dispatch(funName, ProtoMessage(payload), responseBuilder)
 
         val responsePayload = responseBuilder.pack()
         println("==== RESPONSE ====")

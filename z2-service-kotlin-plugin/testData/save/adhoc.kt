@@ -7,7 +7,7 @@ import hu.simplexion.z2.service.runtime.ServiceConsumer
 import hu.simplexion.z2.service.runtime.defaultServiceCallTransport
 import hu.simplexion.z2.commons.protobuf.ProtoMessage
 import hu.simplexion.z2.service.runtime.ServiceContext
-import hu.simplexion.z2.service.runtime.ServiceProvider
+import hu.simplexion.z2.service.runtime.ServiceImpl
 
 interface TestService : Service {
 
@@ -31,12 +31,11 @@ object TestServiceConsumer : TestService, ServiceConsumer {
 
 }
 
-class TestServiceProvider : TestService, ServiceProvider {
+class TestServiceImpl : TestService, ServiceImpl {
 
     override suspend fun dispatch(
         funName: String,
         payload: ProtoMessage,
-        context: ServiceContext,
         response : ProtoMessageBuilder
     ) {
         when (funName) {

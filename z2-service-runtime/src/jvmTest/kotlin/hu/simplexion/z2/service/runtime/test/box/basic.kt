@@ -13,10 +13,10 @@ class BasicTest {
     fun box(): String {
         var response : String
         runBlocking {
-            defaultServiceProviderRegistry += TestServiceProvider()
+            defaultServiceImplFactory += TestServiceImpl(null)
             response = TestServiceConsumer.testFun(1, "hello")
         }
-        return if (response.startsWith("i:1 s:hello BasicServiceContext(")) "OK" else "Fail (response=$response)"
+        return if (response.startsWith("i:1 s:hello null")) "OK" else "Fail (response=$response)"
     }
 
     @Test
@@ -50,27 +50,27 @@ object TestServiceConsumer : TestService {
 
 }
 
-class TestServiceProvider : TestService, ServiceProvider {
+class TestServiceImpl(override val serviceContext: ServiceContext?) : TestService, ServiceImpl {
 
     override var serviceName = "TestService"
 
     override suspend fun dispatch(
         funName: String,
         payload: ProtoMessage,
-        context: ServiceContext,
         response : ProtoMessageBuilder
     ) {
         when (funName) {
-            "testFun" -> response.string(1, testFun(payload.int(1), payload.string(2), context))
+            "testFun" -> response.string(1, testFun(payload.int(1), payload.string(2)))
             else -> throw IllegalStateException("unknown function: $funName")
         }
     }
 
-    suspend fun testFun(arg1: Int, arg2: String, serviceContext : ServiceContext?): String {
-        return "i:$arg1 s:$arg2 $serviceContext"
+    override fun newInstance(serviceContext: ServiceContext?) : ServiceImpl {
+        return TestServiceImpl(serviceContext)
     }
 
-    override suspend fun testFun(arg1: Int, arg2: String) =
-        testFun(arg1, arg2, null)
+    override suspend fun testFun(arg1: Int, arg2: String): String {
+        return "i:$arg1 s:$arg2 $serviceContext"
+    }
 
 }

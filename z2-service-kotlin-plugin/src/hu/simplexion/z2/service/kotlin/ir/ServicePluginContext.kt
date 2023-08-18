@@ -10,6 +10,7 @@ import hu.simplexion.z2.service.kotlin.ir.util.ServiceFunctionCache
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.jvm.functionByName
 import org.jetbrains.kotlin.ir.types.defaultType
+import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
@@ -24,7 +25,9 @@ class ServicePluginContext(
     val serviceType = serviceClass.defaultType
     val serviceName = serviceClass.owner.properties.first { it.name.identifier == SERVICE_NAME_PROPERTY }
 
-    val serviceProviderType = SERVICE_PROVIDER_CLASS.runtimeClass().defaultType
+    val serviceImplClass = SERVICE_IMPL_CLASS.runtimeClass()
+    val serviceImplType = SERVICE_IMPL_CLASS.runtimeClass().defaultType
+    val serviceImplNewInstance = serviceImplClass.owner.functions.single { it.name.identifier == SERVICE_IMPL_NEW_INSTANCE }.symbol
 
     val serviceCallTransportClass = SERVICE_CALL_TRANSPORT_CLASS.runtimeClass(TRANSPORT_PACKAGE)
     val callFunction = serviceCallTransportClass.functionByName(CALL_FUNCTION)
