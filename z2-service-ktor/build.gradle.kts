@@ -84,8 +84,14 @@ fun RepositoryHandler.mavenRepo(repoUrl: String) {
     }
 }
 
-val javadocJar by tasks.registering(Jar::class) {
-    archiveClassifier.set("javadoc")
+publishing.publications.withType<MavenPublication> {
+    val publication = this
+    val javadocJar = tasks.register("${publication.name}JavadocJar", Jar::class) {
+        archiveClassifier.set("javadoc")
+        // Each archive name should be distinct. Mirror the format for the sources Jar tasks.
+        archiveBaseName.set("${archiveBaseName.get()}-${publication.name}")
+    }
+    artifact(javadocJar)
 }
 
 if (isPublishing) {
@@ -121,9 +127,6 @@ if (isPublishing) {
         }
 
         publications.withType<MavenPublication>().all {
-
-            artifact(javadocJar.get())
-
             pom {
                 description.set(project.name)
                 name.set(pomName)

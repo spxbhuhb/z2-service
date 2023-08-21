@@ -1,3 +1,5 @@
+rootProject.name = "z2-service-gradle-plugin"
+
 pluginManagement {
     repositories {
         mavenCentral()
@@ -5,4 +7,4 @@ pluginManagement {
     }
 }
 
-rootProject.name = "z2-service-gradle-plugin"
+includeBuild("../z2-service-runtime")

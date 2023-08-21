@@ -1,3 +1,5 @@
+rootProject.name = "z2-service-kotlin-plugin"
+
 pluginManagement {
     repositories {
         mavenCentral()
@@ -5,4 +7,5 @@ pluginManagement {
     }
 
 }
-rootProject.name = "z2-service-kotlin-plugin"
+
+includeBuild("../z2-service-runtime")

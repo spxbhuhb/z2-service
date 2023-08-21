@@ -9,3 +9,5 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+
+includeBuild("../z2-service-runtime")
