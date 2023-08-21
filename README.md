@@ -55,7 +55,7 @@ fun main() {
 
 When using services we work with:
 
-* service definitions
+* service definitions (the API)
 * service consumers
 * service implementations
 * service transports
@@ -109,10 +109,10 @@ class HelloServiceImpl : HelloService, ServiceImpl {
 }
 ```
 
-Register the service providers during application startup, so the server knows that they are available.
+Register the service implementation during application startup, so the server knows that they are available.
 
 Use [defaultServiceImplFactory](./z2-service-runtime/src/commonMain/kotlin/hu/simplexion/z2/service/runtime/globals.kt)
-for or implement your own way to store the services. These registries are used by the transports to find the service.
+or implement your own way to store the services. These factories are used by the transports to find the service.
 
 ```kotlin
 defaultServiceImplFactory += HelloServiceImpl()
@@ -173,6 +173,25 @@ class HelloServiceImpl : HelloService, ServiceImpl {
     }
 
 }
+```
+
+Type of `serviceContext` is `ServiceContext`:
+
+```kotlin
+interface ServiceContext {
+    val uuid: UUID<ServiceContext>
+    var data : MutableMap<Any,Any?>
+}
+```
+
+Your transport may use your choice of class for the actual service context. There is a `BasicServiceContext` which is the
+barest implementation:
+
+```kotlin
+data class BasicServiceContext(
+    override val uuid: UUID<ServiceContext> = UUID(),
+    override var data : MutableMap<Any,Any?> = mutableMapOf()
+) : ServiceContext
 ```
 
 ### Service Transports
@@ -386,13 +405,20 @@ class TestServiceImpl : TestService, ServiceImpl {
 
 ## Plugin Development
 
-Projects are independent, you have to use "Link Gradle Project" one-by-one.
+The repo contains a composite gradle build. When cloning with IntelliJ the IDE
+asks about importing the Gradle project. As of now this imports 3 of the 4 projects,
+`z2-service-kotlin-plugin` has to be linked manually but clicking on `settings.gradle.kts`
+and selecting the "Link Gradle Project" item.
 
-`z2-service-kotlin-plugin` contains the source code of the compiler plugin.
+| Project                    | Content                            |
+|----------------------------|------------------------------------|
+| `z2-service-runtime`       | runtime part of the library        |
+| `z2-service-kotlin-plugin` | source code of the compiler plugin |
+| `z2-service-gradle-plugin` | source code of the gradle plugin   |
+| `z2-service-ktor`          | Ktor specific implementations      |
 
-It uses the standard [Kotlin compiler test infrastructure](https://github.com/JetBrains/kotlin/blob/bebb9b13924660160226a85cde59b6f30c72feec/compiler/test-infrastructure/ReadMe.md).
-
-To run box tests you have to run the `z2-service-runtime:shadowJar` Gradle task.
+* The compiler plugin uses the standard [Kotlin compiler test infrastructure](https://github.com/JetBrains/kotlin/blob/bebb9b13924660160226a85cde59b6f30c72feec/compiler/test-infrastructure/ReadMe.md).
+* To run the compiler plugin tests you have to run the `z2-service-runtime:shadowJar` beforehand.
 
 ## License
 

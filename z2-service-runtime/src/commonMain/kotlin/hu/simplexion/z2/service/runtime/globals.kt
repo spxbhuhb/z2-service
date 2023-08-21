@@ -1,7 +1,7 @@
 package hu.simplexion.z2.service.runtime
 
-import hu.simplexion.z2.service.runtime.registry.BasicServiceImplFactory
-import hu.simplexion.z2.service.runtime.registry.ServiceImplFactory
+import hu.simplexion.z2.service.runtime.factory.BasicServiceImplFactory
+import hu.simplexion.z2.service.runtime.factory.ServiceImplFactory
 import hu.simplexion.z2.service.runtime.transport.LocalServiceCallTransport
 import hu.simplexion.z2.service.runtime.transport.ServiceCallTransport
 

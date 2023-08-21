@@ -3,6 +3,7 @@ package hu.simplexion.z2.service.ktor.server
 import hu.simplexion.z2.commons.protobuf.ProtoMessage
 import hu.simplexion.z2.commons.protobuf.ProtoMessageBuilder
 import hu.simplexion.z2.service.runtime.BasicServiceContext
+import hu.simplexion.z2.service.runtime.ServiceContext
 import hu.simplexion.z2.service.runtime.defaultServiceImplFactory
 import hu.simplexion.z2.service.runtime.transport.RequestEnvelope
 import hu.simplexion.z2.service.runtime.transport.ResponseEnvelope
@@ -11,11 +12,14 @@ import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 
-fun Routing.basicWebsocketServiceCallTransport(path: String = "/z2/service") {
+fun Routing.basicWebsocketServiceCallTransport(
+    path: String = "/z2/service",
+    newContext: () -> ServiceContext = { BasicServiceContext() }
+) {
 
     webSocket(path) {
         try {
-            val context = BasicServiceContext()
+            val context = newContext()
 
             for (frame in incoming) {
                 frame as? Frame.Binary ?: continue

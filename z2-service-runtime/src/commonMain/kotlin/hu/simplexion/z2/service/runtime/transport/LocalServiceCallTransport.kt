@@ -7,7 +7,7 @@ import hu.simplexion.z2.service.runtime.BasicServiceContext
 import hu.simplexion.z2.service.runtime.defaultServiceImplFactory
 
 /**
- * Get the service from the implementation registry, execute the function with it and
+ * Get the service from the implementation factory, execute the function with it and
  * returns with the result.
  */
 class LocalServiceCallTransport : ServiceCallTransport {
